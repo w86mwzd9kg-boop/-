@@ -1,8 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
   <meta charset="UTF-8">
+  <!-- Теги для запрета кэширования (чтобы игра всегда обновлялась) -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
   <title>Kingdom Runner — Forest Regrowth</title>
   
@@ -10,60 +14,16 @@
   <meta name="theme-color" content="#0b1e12">
 
   <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #0b1e12;
-      touch-action: none
-    }
-
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1e12; touch-action: none }
     canvas { display: block; cursor: crosshair; touch-action: none }
-
-    .hud {
-      position: fixed; top: 12px; left: 12px; right: 12px;
-      display: flex; justify-content: space-between; gap: 12px;
-      pointer-events: none; z-index: 10; flex-wrap: wrap
-    }
-
+    .hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; z-index: 10; flex-wrap: wrap }
     .hud>* { pointer-events: auto }
-
-    .resources {
-      display: flex; gap: 10px; background: rgba(20, 40, 25, .92);
-      padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap
-    }
-
-    .res-item {
-      color: #f5e6b0; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: .85rem
-    }
-
-    .res-item span {
-      background: #0e2b18; padding: 3px 12px; border-radius: 20px;
-      min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7
-    }
-
-    .rank-badge {
-      background: rgba(20, 40, 25, .92); padding: 10px 22px;
-      border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem
-    }
-
-    .shop {
-      position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px;
-      background: rgba(15, 32, 20, .94); border: 2px solid #d4af37;
-      border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10;
-      transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center;
-    }
-
+    .resources { display: flex; gap: 10px; background: rgba(20, 40, 25, .92); padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap }
+    .res-item { color: #f5e6b0; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: .85rem }
+    .res-item span { background: #0e2b18; padding: 3px 12px; border-radius: 20px; min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7 }
+    .rank-badge { background: rgba(20, 40, 25, .92); padding: 10px 22px; border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem }
+    .shop { position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px; background: rgba(15, 32, 20, .94); border: 2px solid #d4af37; border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10; transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center; }
     .shop.collapsed { transform: translateX(calc(100% + 20px)); opacity: 0; pointer-events: none; }
     .shop h3 { color: #ffd966; font-size: 1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #8b6914; padding-bottom: 8px }
     .shop-item { background: #1a3320; border-radius: 14px; padding: 8px; margin-bottom: 8px; border: 1px solid #6b8c5c; cursor: pointer; transition: .15s }
@@ -75,52 +35,27 @@
     .shop-name { color: #ffeaac; font-weight: 600; font-size: .85rem }
     .shop-cost { color: #b8d9a8; font-size: .72rem; margin-top: 2px }
     .shop-effect { color: #cfcfb0; font-size: .68rem; margin-top: 3px }
-
-    .shop-toggle {
-      position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px;
-      border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966;
-      color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4); transition: transform .2s, background .2s;
-    }
-
-    .shop-toggle:hover { background: linear-gradient(180deg, #ffd966, #dbb42c); transform: scale(1.08) }
-    .shop-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a5d0e }
+    .shop-toggle { position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966; color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4); transition: transform .2s, background .2s; }
     .shop-toggle .icon { transition: transform .3s }
     .shop-toggle.collapsed .icon { transform: rotate(180deg) }
-
     .bar { position: fixed; bottom: 12px; left: 12px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap }
     .btn { background: rgba(20, 40, 25, .92); border: 2px solid #d4af37; color: #ffd966; padding: 10px 16px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: .85rem; transition: .15s }
-    .btn:hover { background: #2a4a30 }
-    .btn:active { transform: translateY(2px) }
     .btn.primary { background: linear-gradient(180deg, #dbb42c, #a67c1e); color: #1e2a0e; border-color: #ffd966; box-shadow: 0 3px 0 #7a5d0e }
-    .btn.primary:active { transform: translateY(4px); box-shadow: 0 0 0 #7a5d0e }
     .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 0 #5a0e05 }
-    .btn.danger:active { transform: translateY(4px); box-shadow: 0 0 0 #5a0e05 }
-
     .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem }
-    .banner small { display: block; color: #b8d9a8; font-weight: normal; margin-top: 2px; font-size: .75rem }
     .banner.demolish { background: rgba(80, 20, 20, .96); border-color: #e74c3c; color: #ffcccc }
-    .banner.demolish small { color: #ff9999 }
-
     .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px }
     .modal-c { background: #274427; border: 4px solid #d4af37; border-radius: 32px; padding: 26px 22px; max-width: 460px; width: 100%; text-align: center; color: #f9f1d2 }
     .modal-c h3 { font-size: 1.8rem; color: #ffd966; margin-bottom: 12px }
     .blog { background: #1a2e1a; border-radius: 16px; padding: 12px; text-align: left; font-family: monospace; max-height: 220px; overflow-y: auto; margin: 12px 0; font-size: .88rem; line-height: 1.5 }
     .mbtn { background: #dbb42c; border: none; border-radius: 40px; padding: 12px 28px; font-weight: bold; font-size: 1rem; color: #1e2a0e; cursor: pointer; box-shadow: 0 4px 0 #8b6914; margin: 4px }
-    .mbtn:active { transform: translateY(3px); box-shadow: 0 0 0 #8b6914 }
-
     .log { position: fixed; bottom: 70px; left: 12px; width: 300px; max-height: 110px; overflow-y: auto; z-index: 9; background: rgba(10, 25, 15, .85); border: 1px solid #6b8c5c; border-radius: 12px; padding: 8px 12px; font-family: monospace; font-size: .72rem; color: #bbd9a8; pointer-events: none }
-    .log div { margin-bottom: 2px }
-
     .zoom-ind { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(20, 40, 25, .9); border: 1px solid #d4af37; color: #ffd966; padding: 6px 12px; border-radius: 20px; font-size: .75rem; z-index: 10; font-weight: bold }
     .help { position: fixed; top: 90px; left: 12px; background: rgba(15, 32, 20, .94); border: 2px solid #6b8c5c; border-radius: 14px; padding: 10px 14px; color: #bbd9a8; font-size: .72rem; z-index: 9; max-width: 230px; line-height: 1.5; pointer-events: none; transition: opacity .4s }
-    .help b { color: #ffd966 }
     .help.hidden { opacity: 0 }
-
     .forest-badge { position: fixed; top: 52px; left: 12px; z-index: 10; background: rgba(15, 32, 20, .92); border: 2px solid #6b8c5c; border-radius: 30px; padding: 6px 14px; color: #bbd9a8; font-size: .72rem; font-weight: bold; pointer-events: none; transition: border-color .3s; }
     .forest-badge.growing { border-color: #8bc34a; box-shadow: 0 0 10px rgba(139, 195, 74, .4) }
     .forest-badge b { color: #8bc34a }
-
     @media(max-width:720px) {
       .shop { width: 170px; top: 120px }
       .shop h3 { font-size: .85rem }
@@ -136,10 +71,8 @@
     }
   </style>
 </head>
-
 <body class="shop-open">
   <canvas id="cv"></canvas>
-
   <div class="hud">
     <div class="resources">
       <div class="res-item">🪙 <span id="gold">150</span></div>
@@ -150,30 +83,13 @@
     </div>
     <div class="rank-badge" id="rank">🏆 Ранг 1: Новобранец</div>
   </div>
-
   <div class="forest-badge" id="forestBadge">🌲 Лес: <b id="treeCount">0</b> / <span id="treeMax">0</span></div>
-
   <div class="help" id="help">
-    <b>Управление:</b><br>
-    🖱️ ЛКМ — постройка/снос<br>
-    🖱️ ПКМ — панорама<br>
-    🖲️ Колесо — зум<br>
-    👆 1 палец — панорама<br>
-    ✌️ 2 пальца — зум<br>
-    <span style="opacity:.7">(скроется через 8с)</span>
+    <b>Управление:</b><br>🖱️ ЛКМ — постройка/снос<br>🖱️ ПКМ — панорама<br>🖲️ Колесо — зум<br>👆 1 палец — панорама<br>✌️ 2 пальца — зум<br><span style="opacity:.7">(скроется через 8с)</span>
   </div>
-
-  <button class="shop-toggle" id="shopToggle" title="Скрыть/показать постройки">
-    <span class="icon">▶</span>
-  </button>
-
-  <div class="shop" id="shop">
-    <h3>🏗️ Постройки</h3>
-    <div id="shopList"></div>
-  </div>
-
+  <button class="shop-toggle" id="shopToggle" title="Скрыть/показать постройки"><span class="icon">▶</span></button>
+  <div class="shop" id="shop"><h3>🏗️ Постройки</h3><div id="shopList"></div></div>
   <div class="banner" id="banner"></div>
-
   <div class="bar">
     <button class="btn primary" id="findBtn">⚔️ Бой</button>
     <button class="btn" id="demolishBtn">🗑️ Снести</button>
@@ -182,10 +98,8 @@
     <button class="btn" id="zr">🎯</button>
     <button class="btn danger" id="resetBtn">🔄</button>
   </div>
-
   <div class="zoom-ind" id="zoomInd">🔍 70%</div>
   <div class="log" id="log"></div>
-
   <div class="modal" id="modal">
     <div class="modal-c">
       <h3 id="mtitle">Битва!</h3>
@@ -194,12 +108,10 @@
     </div>
   </div>
 
-  <!-- Firebase Подключение и Игра -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, onDisconnect, get, off, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // Ключи Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCvr3N350SeY-UImZfqxvRQbte6lhLeA7g",
       authDomain: "kingdom-online-ef88b.firebaseapp.com",
@@ -212,12 +124,11 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const myPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
+    const myPlayerId = 'p_' + Math.random().toString(36).substr(2, 9);
     
     (function() {
       'use strict';
 
-      // ============ КОНСТАНТЫ ============
       var RANKS = [
         { name: 'Новобранец', maxWins: 3, str: ['house', 'farm', 'lumberMill', 'barracks'] },
         { name: 'Воин', maxWins: 6, str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith', 'wall'] },
@@ -242,11 +153,7 @@
 
       var GS = 60, COLS = 40, ROWS = 28;
       var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-      var MAX_CITIZENS = 80;
-      var CHOP_DURATION = 1.0;
-      var WOOD_PER_CHOP = 5;
-      var ARRIVE_DIST = 16;
-
+      var MAX_CITIZENS = 80, CHOP_DURATION = 1.0, WOOD_PER_CHOP = 5, ARRIVE_DIST = 16;
       var TREE_INITIAL = 200, TREE_MIN = 80, TREE_MAX = 900;
       var TREE_GROW_BASE = 0.5, TREE_GROW_PER_SEC = 0.006, TREE_GROW_MAX = 4.5;
       var treeGrowTimer = 0, gameTime = 0;
@@ -264,95 +171,69 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // ============ УЛУЧШЕННАЯ ЛОГИКА ПОИСКА (БЕЗ ОШИБОК) ============
+      // === НАДЕЖНЫЙ ПОИСК ИГРОКОВ ===
       let isMatching = false;
-      let matchListener = null;
+      const queueRef = ref(db, 'queue');
+      const myBattleRef = ref(db, 'battles/' + myPlayerId);
 
       function findOpponent() {
         if (isMatching) {
-          // Отмена поиска
           isMatching = false;
-          if (matchListener) {
-            off(ref(db, 'matchmaking'), 'value', matchListener);
-            matchListener = null;
-          }
-          remove(ref(db, 'matchmaking/' + myPlayerId));
-          const btn = document.getElementById('findBtn');
-          btn.disabled = false;
-          btn.textContent = '⚔️ Бой';
+          off(queueRef);
+          remove(ref(db, 'queue/' + myPlayerId));
+          document.getElementById('findBtn').textContent = '⚔️ Бой';
           addLog('🚫 Поиск отменен');
           return;
         }
 
         isMatching = true;
-        const btn = document.getElementById('findBtn');
-        btn.disabled = false; // Не блокируем кнопку, чтобы можно было отменить
-        btn.textContent = '⏳ Отменить';
-        addLog('Поиск игрока...');
+        document.getElementById('findBtn').textContent = '⏳ Поиск...';
+        addLog('🔎 Подключение к очереди...');
 
-        const myData = { id: myPlayerId, army: state.army, defense: calcDefense() };
-        const myRef = ref(db, 'matchmaking/' + myPlayerId);
+        set(ref(db, 'queue/' + myPlayerId), { id: myPlayerId, army: state.army, defense: calcDefense() });
+        onDisconnect(ref(db, 'queue/' + myPlayerId)).remove();
 
-        // Встаем в очередь
-        set(myRef, { ...myData, status: 'waiting' });
-        onDisconnect(myRef).remove();
-
-        matchListener = onValue(ref(db, 'matchmaking'), (snapshot) => {
+        onValue(queueRef, (snapshot) => {
           if (!isMatching) return;
           const players = snapshot.val();
           if (!players) return;
 
-          // 1. Проверяем, не спарил ли нас кто-то другой
-          if (players[myPlayerId] && players[myPlayerId].status === 'matched') {
-            const oppData = players[myPlayerId].opponent;
-            finishMatch(oppData);
-            return;
-          }
+          const oppKeys = Object.keys(players).filter(id => id !== myPlayerId);
 
-          // 2. Ищем соперника
-          const oppId = Object.keys(players).find(id => id !== myPlayerId && players[id].status === 'waiting');
-
-          if (oppId) {
+          if (oppKeys.length > 0) {
+            const oppId = oppKeys[0];
             const oppData = players[oppId];
 
-            // Берем на себя роль "хоста", если наш ID меньше (алфавитно).
-            // Это защищает от ситуации, когда оба пытаются схватить друг друга одновременно.
             if (myPlayerId < oppId) {
-              const oppRef = ref(db, 'matchmaking/' + oppId);
-              runTransaction(oppRef, (currentData) => {
-                if (currentData && currentData.status === 'waiting') {
-                  currentData.status = 'matched';
-                  currentData.opponent = myData;
-                  return currentData;
-                }
-                return currentData;
-              }).then((result) => {
-                if (result.committed && result.snapshot.val() && result.snapshot.val().opponent && result.snapshot.val().opponent.id === myPlayerId) {
-                  finishMatch(oppData);
-                }
-              });
+              isMatching = false;
+              off(queueRef);
+              document.getElementById('findBtn').textContent = '⚔️ Бой';
+
+              remove(ref(db, 'queue/' + myPlayerId));
+              remove(ref(db, 'queue/' + oppId));
+
+              set(ref(db, 'battles/' + oppId), { opponent: { army: state.army, defense: calcDefense() } });
+              
+              addLog('✅ Соперник найден!');
+              startRealBattle(oppData);
             }
           }
         });
-      }
 
-      function finishMatch(opponentData) {
-        if (!isMatching) return;
-        isMatching = false;
-
-        if (matchListener) {
-          off(ref(db, 'matchmaking'), 'value', matchListener);
-          matchListener = null;
-        }
-
-        remove(ref(db, 'matchmaking/' + myPlayerId));
-
-        const btn = document.getElementById('findBtn');
-        btn.disabled = false;
-        btn.textContent = '⚔️ Бой';
-        addLog('✅ Соперник найден!');
-
-        startRealBattle(opponentData);
+        onValue(myBattleRef, (snapshot) => {
+          if (!isMatching) return;
+          const bData = snapshot.val();
+          if (bData && bData.opponent) {
+            isMatching = false;
+            off(queueRef);
+            off(myBattleRef);
+            remove(ref(db, 'queue/' + myPlayerId));
+            remove(myBattleRef);
+            document.getElementById('findBtn').textContent = '⚔️ Бой';
+            addLog('✅ Соперник найден!');
+            startRealBattle(bData.opponent);
+          }
+        });
       }
 
       function calcDefense() {
@@ -365,34 +246,22 @@
       }
 
       function startRealBattle(opponent) {
-        var playerArmy = state.army;
-        var playerDef = calcDefense();
-        var enemyArmy = opponent.army;
-        var enemyDef = opponent.defense;
-
+        var playerArmy = state.army, playerDef = calcDefense();
+        var enemyArmy = opponent.army, enemyDef = opponent.defense;
         var pp = playerArmy * (1 + playerDef * 0.02) + (Math.random() * 5);
         var ep = enemyArmy * (1 + enemyDef * 0.02) + (Math.random() * 5);
         var win = pp > ep;
 
-        var log = '⚔️ Против: Живой Игрок<br>';
-        log += '🛡️ Ты: ' + Math.floor(playerArmy) + ' (+защ ' + playerDef + ')<br>';
-        log += '🛡️ Враг: ' + Math.floor(enemyArmy) + ' (+защ ' + enemyDef + ')<br>';
-        log += '💥 ' + pp.toFixed(1) + ' vs ' + ep.toFixed(1) + '<br><br>';
+        var log = '⚔️ Против: Живой Игрок<br>🛡️ Ты: ' + Math.floor(playerArmy) + ' (+защ ' + playerDef + ')<br>🛡️ Враг: ' + Math.floor(enemyArmy) + ' (+защ ' + enemyDef + ')<br>💥 ' + pp.toFixed(1) + ' vs ' + ep.toFixed(1) + '<br><br>';
         
         if (win) {
-          var gr = 30 + Math.floor(enemyArmy * 1.2);
-          var wr = 15 + Math.floor(enemyArmy * 0.8);
-          var loss = Math.floor(playerArmy * 0.15);
-          state.gold += gr; state.wood += wr;
-          state.army = Math.max(5, playerArmy - loss);
-          state.wins++;
+          var gr = 30 + Math.floor(enemyArmy * 1.2), wr = 15 + Math.floor(enemyArmy * 0.8), loss = Math.floor(playerArmy * 0.15);
+          state.gold += gr; state.wood += wr; state.army = Math.max(5, playerArmy - loss); state.wins++;
           log += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии';
           addLog('✅ Победа над Живым Игроком');
         } else {
           var loss = Math.floor(playerArmy * 0.4);
-          state.army = Math.max(3, playerArmy - loss);
-          state.gold = Math.max(0, state.gold - 20);
-          state.wood = Math.max(0, state.wood - 15);
+          state.army = Math.max(3, playerArmy - loss); state.gold = Math.max(0, state.gold - 20); state.wood = Math.max(0, state.wood - 15);
           log += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵';
           addLog('❌ Поражение от Живого Игрока');
         }
@@ -402,8 +271,7 @@
         document.getElementById('modal').style.display = 'flex';
       }
 
-      // ============ ОСТАЛЬНАЯ ИГРА (Деревья, Жители, Рисование, UI) ============
-      
+      // ============ ОСТАЛЬНАЯ ИГРА ============
       function makeTreeAt(gx, gy) {
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
         if (anyOcc(gx, gy, 1)) return false;
@@ -885,7 +753,6 @@
         if (r.maxWins !== Infinity && state.wins >= r.maxWins && state.rankIndex < RANKS.length - 1) { state.rankIndex++; addLog('🎉 Ранг: ' + RANKS[state.rankIndex].name); renderShop(); }
       }
       
-      // Привязка кнопки к новой улучшенной функции
       document.getElementById('findBtn').onclick = findOpponent;
       document.getElementById('mclose').onclick = function() { document.getElementById('modal').style.display = 'none'; };
 
@@ -902,13 +769,26 @@
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
 
+      // АВТООБНОВЛЕНИЕ SERVICE WORKER
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-            navigator.serviceWorker.register('sw.js').then(function(reg) {
-                console.log('ServiceWorker зарегистрирован!');
-            }, function(err) {
-                console.log('Ошибка ServiceWorker: ', err);
-            });
+          navigator.serviceWorker.register('sw.js').then(function(reg) {
+            console.log('ServiceWorker зарегистрирован!');
+            
+            reg.onupdatefound = function() {
+              var installingWorker = reg.installing;
+              installingWorker.onstatechange = function() {
+                if (installingWorker.state === 'installed') {
+                  if (navigator.serviceWorker.controller) {
+                    console.log('Доступно обновление, перезагрузка...');
+                    window.location.reload();
+                  }
+                }
+              };
+            };
+          }, function(err) {
+            console.log('Ошибка ServiceWorker: ', err);
+          });
         });
       }
 
