@@ -2,7 +2,6 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <!-- Теги для запрета кэширования (чтобы игра всегда обновлялась) -->
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -17,12 +16,14 @@
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif }
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0b1e12; touch-action: none }
     canvas { display: block; cursor: crosshair; touch-action: none }
+    
     .hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; z-index: 10; flex-wrap: wrap }
     .hud>* { pointer-events: auto }
     .resources { display: flex; gap: 10px; background: rgba(20, 40, 25, .92); padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap }
     .res-item { color: #f5e6b0; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: .85rem }
     .res-item span { background: #0e2b18; padding: 3px 12px; border-radius: 20px; min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7 }
     .rank-badge { background: rgba(20, 40, 25, .92); padding: 10px 22px; border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem }
+    
     .shop { position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px; background: rgba(15, 32, 20, .94); border: 2px solid #d4af37; border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10; transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center; }
     .shop.collapsed { transform: translateX(calc(100% + 20px)); opacity: 0; pointer-events: none; }
     .shop h3 { color: #ffd966; font-size: 1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #8b6914; padding-bottom: 8px }
@@ -35,20 +36,25 @@
     .shop-name { color: #ffeaac; font-weight: 600; font-size: .85rem }
     .shop-cost { color: #b8d9a8; font-size: .72rem; margin-top: 2px }
     .shop-effect { color: #cfcfb0; font-size: .68rem; margin-top: 3px }
+    
     .shop-toggle { position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966; color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4); transition: transform .2s, background .2s; }
     .shop-toggle .icon { transition: transform .3s }
     .shop-toggle.collapsed .icon { transform: rotate(180deg) }
+    
     .bar { position: fixed; bottom: 12px; left: 12px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap }
     .btn { background: rgba(20, 40, 25, .92); border: 2px solid #d4af37; color: #ffd966; padding: 10px 16px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: .85rem; transition: .15s }
     .btn.primary { background: linear-gradient(180deg, #dbb42c, #a67c1e); color: #1e2a0e; border-color: #ffd966; box-shadow: 0 3px 0 #7a5d0e }
     .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 0 #5a0e05 }
+    
     .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem }
     .banner.demolish { background: rgba(80, 20, 20, .96); border-color: #e74c3c; color: #ffcccc }
+    
     .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px }
     .modal-c { background: #274427; border: 4px solid #d4af37; border-radius: 32px; padding: 26px 22px; max-width: 460px; width: 100%; text-align: center; color: #f9f1d2 }
     .modal-c h3 { font-size: 1.8rem; color: #ffd966; margin-bottom: 12px }
     .blog { background: #1a2e1a; border-radius: 16px; padding: 12px; text-align: left; font-family: monospace; max-height: 220px; overflow-y: auto; margin: 12px 0; font-size: .88rem; line-height: 1.5 }
     .mbtn { background: #dbb42c; border: none; border-radius: 40px; padding: 12px 28px; font-weight: bold; font-size: 1rem; color: #1e2a0e; cursor: pointer; box-shadow: 0 4px 0 #8b6914; margin: 4px }
+    
     .log { position: fixed; bottom: 70px; left: 12px; width: 300px; max-height: 110px; overflow-y: auto; z-index: 9; background: rgba(10, 25, 15, .85); border: 1px solid #6b8c5c; border-radius: 12px; padding: 8px 12px; font-family: monospace; font-size: .72rem; color: #bbd9a8; pointer-events: none }
     .zoom-ind { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(20, 40, 25, .9); border: 1px solid #d4af37; color: #ffd966; padding: 6px 12px; border-radius: 20px; font-size: .75rem; z-index: 10; font-weight: bold }
     .help { position: fixed; top: 90px; left: 12px; background: rgba(15, 32, 20, .94); border: 2px solid #6b8c5c; border-radius: 14px; padding: 10px 14px; color: #bbd9a8; font-size: .72rem; z-index: 9; max-width: 230px; line-height: 1.5; pointer-events: none; transition: opacity .4s }
@@ -56,6 +62,12 @@
     .forest-badge { position: fixed; top: 52px; left: 12px; z-index: 10; background: rgba(15, 32, 20, .92); border: 2px solid #6b8c5c; border-radius: 30px; padding: 6px 14px; color: #bbd9a8; font-size: .72rem; font-weight: bold; pointer-events: none; transition: border-color .3s; }
     .forest-badge.growing { border-color: #8bc34a; box-shadow: 0 0 10px rgba(139, 195, 74, .4) }
     .forest-badge b { color: #8bc34a }
+    
+    /* Скрываем интерфейс во время битвы */
+    body.in-battle .hud, body.in-battle .shop, body.in-battle .shop-toggle, 
+    body.in-battle .bar, body.in-battle .forest-badge, body.in-battle .zoom-ind, 
+    body.in-battle .help { display: none !important; }
+
     @media(max-width:720px) {
       .shop { width: 170px; top: 120px }
       .shop h3 { font-size: .85rem }
@@ -73,6 +85,7 @@
 </head>
 <body class="shop-open">
   <canvas id="cv"></canvas>
+  
   <div class="hud">
     <div class="resources">
       <div class="res-item">🪙 <span id="gold">150</span></div>
@@ -171,7 +184,29 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // === НАДЕЖНЫЙ ПОИСК ИГРОКОВ ===
+      // ============ СИСТЕМА АРЕНЫ ============
+      var battleState = {
+        active: false,
+        timer: 0,
+        duration: 6.0,
+        playerWin: false,
+        resultLog: '',
+        playerArmy: 0,
+        enemyArmy: 0,
+        playerBuildings: [],
+        enemyBuildings: [],
+        units: []
+      };
+
+      function mulberry32(a) {
+        return function() {
+          var t = a += 0x6D2B79F5;
+          t = Math.imul(t ^ t >>> 15, t | 1);
+          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+          return ((t ^ t >>> 14) >>> 0) / 4294967296;
+        }
+      }
+
       let isMatching = false;
       const queueRef = ref(db, 'queue');
       const myBattleRef = ref(db, 'battles/' + myPlayerId);
@@ -188,9 +223,17 @@
 
         isMatching = true;
         document.getElementById('findBtn').textContent = '⏳ Поиск...';
-        addLog('🔎 Подключение к очереди...');
+        addLog('🔎 Поиск соперника...');
 
-        set(ref(db, 'queue/' + myPlayerId), { id: myPlayerId, army: state.army, defense: calcDefense() });
+        // Отправляем и армию, и список зданий (только типы)
+        let myBuildings = state.buildings.map(b => ({ type: b.type, level: b.level }));
+        
+        set(ref(db, 'queue/' + myPlayerId), { 
+            id: myPlayerId, 
+            army: state.army, 
+            defense: calcDefense(),
+            buildings: myBuildings
+        });
         onDisconnect(ref(db, 'queue/' + myPlayerId)).remove();
 
         onValue(queueRef, (snapshot) => {
@@ -212,10 +255,41 @@
               remove(ref(db, 'queue/' + myPlayerId));
               remove(ref(db, 'queue/' + oppId));
 
-              set(ref(db, 'battles/' + oppId), { opponent: { army: state.army, defense: calcDefense() } });
+              let pPower = state.army * (1 + calcDefense() * 0.02);
+              let ePower = oppData.army * (1 + oppData.defense * 0.02);
               
-              addLog('✅ Соперник найден!');
-              startRealBattle(oppData);
+              let seed = Math.floor((pPower + ePower) * 10000) % 999999; 
+              let rand = mulberry32(seed);
+              pPower += rand() * 10;
+              ePower += rand() * 10;
+              
+              let hostWin = pPower > ePower;
+
+              let resultObj = {
+                win: hostWin,
+                seed: seed,
+                playerPower: pPower,
+                enemyPower: ePower,
+                enemyArmy: oppData.army,
+                enemyDefense: oppData.defense,
+                hostBuildings: myBuildings,
+                enemyBuildings: oppData.buildings || []
+              };
+
+              set(ref(db, 'battles/' + oppId), { 
+                result: { 
+                  win: !hostWin, 
+                  seed: seed,
+                  playerPower: ePower, 
+                  enemyPower: pPower, 
+                  enemyArmy: state.army, 
+                  enemyDefense: calcDefense(),
+                  enemyBuildings: myBuildings, // Для врага наши здания это "enemy"
+                  hostBuildings: oppData.buildings || []
+                } 
+              });
+              
+              startBattleAnimation(resultObj);
             }
           }
         });
@@ -223,15 +297,15 @@
         onValue(myBattleRef, (snapshot) => {
           if (!isMatching) return;
           const bData = snapshot.val();
-          if (bData && bData.opponent) {
+          if (bData && bData.result) {
             isMatching = false;
             off(queueRef);
             off(myBattleRef);
             remove(ref(db, 'queue/' + myPlayerId));
             remove(myBattleRef);
             document.getElementById('findBtn').textContent = '⚔️ Бой';
-            addLog('✅ Соперник найден!');
-            startRealBattle(bData.opponent);
+            
+            startBattleAnimation(bData.result);
           }
         });
       }
@@ -245,39 +319,198 @@
         return d;
       }
 
-      function startRealBattle(opponent) {
-        var playerArmy = state.army, playerDef = calcDefense();
-        var enemyArmy = opponent.army, enemyDef = opponent.defense;
-        var pp = playerArmy * (1 + playerDef * 0.02) + (Math.random() * 5);
-        var ep = enemyArmy * (1 + enemyDef * 0.02) + (Math.random() * 5);
-        var win = pp > ep;
+      function startBattleAnimation(result) {
+        document.body.classList.add('in-battle');
+        battleState.active = true;
+        battleState.timer = 0;
+        battleState.playerWin = result.win;
+        battleState.playerArmy = state.army;
+        battleState.enemyArmy = result.enemyArmy;
+        battleState.playerBuildings = result.hostBuildings || [];
+        battleState.enemyBuildings = result.enemyBuildings || [];
+        battleState.units = [];
 
-        var log = '⚔️ Против: Живой Игрок<br>🛡️ Ты: ' + Math.floor(playerArmy) + ' (+защ ' + playerDef + ')<br>🛡️ Враг: ' + Math.floor(enemyArmy) + ' (+защ ' + enemyDef + ')<br>💥 ' + pp.toFixed(1) + ' vs ' + ep.toFixed(1) + '<br><br>';
-        
-        if (win) {
-          var gr = 30 + Math.floor(enemyArmy * 1.2), wr = 15 + Math.floor(enemyArmy * 0.8), loss = Math.floor(playerArmy * 0.15);
-          state.gold += gr; state.wood += wr; state.army = Math.max(5, playerArmy - loss); state.wins++;
-          log += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии';
-          addLog('✅ Победа над Живым Игроком');
-        } else {
-          var loss = Math.floor(playerArmy * 0.4);
-          state.army = Math.max(3, playerArmy - loss); state.gold = Math.max(0, state.gold - 20); state.wood = Math.max(0, state.wood - 15);
-          log += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵';
-          addLog('❌ Поражение от Живого Игрока');
+        let rand = mulberry32(result.seed);
+
+        let totalUnits = 50;
+        let myUnits = Math.max(5, Math.floor(totalUnits * (state.army / (state.army + result.enemyArmy + 1))));
+        let enemyUnits = Math.max(5, totalUnits - myUnits);
+
+        for(let i=0; i<myUnits; i++) {
+          battleState.units.push({
+            side: 'player',
+            x: cv.width * 0.15 + rand() * 40,
+            y: cv.height * 0.5 + (rand() - 0.5) * 150,
+            speed: 70 + rand() * 50,
+            offset: rand() * 10
+          });
         }
-        checkRank(); save(); updateHUD(); renderShop();
-        document.getElementById('mtitle').textContent = win ? '🏆 Победа!' : '💔 Поражение';
-        document.getElementById('mcontent').innerHTML = '<div class="blog">' + log + '</div>';
-        document.getElementById('modal').style.display = 'flex';
+        for(let i=0; i<enemyUnits; i++) {
+          battleState.units.push({
+            side: 'enemy',
+            x: cv.width * 0.85 - rand() * 40,
+            y: cv.height * 0.5 + (rand() - 0.5) * 150,
+            speed: 70 + rand() * 50,
+            offset: rand() * 10
+          });
+        }
+
+        battleState.resultLog = '⚔️ Против: Живой Игрок<br>';
+        battleState.resultLog += '🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>';
+        battleState.resultLog += '🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>';
+        battleState.resultLog += '💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
       }
 
-      // ============ ОСТАЛЬНАЯ ИГРА ============
+      function updateBattle(dt) {
+        if (!battleState.active) return;
+        battleState.timer += dt;
+
+        for (let u of battleState.units) {
+          if (battleState.timer < 2.0) {
+            u.x += (u.side === 'player' ? 1 : -1) * u.speed * dt;
+          } else if (battleState.timer < 4.5) {
+            if (battleState.timer < 4.0) {
+                u.x += (Math.random() - 0.5) * 15 * dt;
+                u.y += (Math.random() - 0.5) * 15 * dt;
+            }
+          } else {
+            if (u.side === 'player') u.x += (battleState.playerWin ? 1 : -1) * u.speed * 0.5 * dt;
+            else u.x += (battleState.playerWin ? 1 : -1) * u.speed * 0.5 * dt;
+          }
+        }
+
+        if (battleState.timer >= battleState.duration) {
+          battleState.active = false;
+          document.body.classList.remove('in-battle');
+          
+          if (battleState.playerWin) {
+            var gr = 30 + Math.floor(battleState.enemyArmy * 1.2);
+            var wr = 15 + Math.floor(battleState.enemyArmy * 0.8);
+            var loss = Math.floor(battleState.playerArmy * 0.15);
+            state.gold += gr; state.wood += wr; state.army = Math.max(5, battleState.playerArmy - loss); state.wins++;
+            battleState.resultLog += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии';
+            addLog('✅ Победа над Живым Игроком');
+          } else {
+            var loss = Math.floor(battleState.playerArmy * 0.4);
+            state.army = Math.max(3, battleState.playerArmy - loss); state.gold = Math.max(0, state.gold - 20); state.wood = Math.max(0, state.wood - 15);
+            battleState.resultLog += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵';
+            addLog('❌ Поражение от Живого Игрока');
+          }
+          checkRank(); save(); updateHUD(); renderShop();
+          
+          document.getElementById('mtitle').textContent = battleState.playerWin ? '🏆 Победа!' : '💔 Поражение';
+          document.getElementById('mcontent').innerHTML = '<div class="blog">' + battleState.resultLog + '</div>';
+          document.getElementById('modal').style.display = 'flex';
+        }
+      }
+
+      function renderBattle() {
+        var g = ctx.createLinearGradient(0, 0, 0, cv.height);
+        g.addColorStop(0, '#1a2530'); g.addColorStop(1, '#0d131a');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+
+        ctx.fillStyle = '#4a7a42';
+        ctx.fillRect(0, cv.height * 0.4, cv.width, cv.height * 0.6);
+        ctx.fillStyle = '#3a6032';
+        ctx.fillRect(0, cv.height * 0.4, cv.width, 10);
+
+        // Рисуем замки и поселения (до юнитов)
+        drawArenaKingdom(cv.width * 0.15, cv.height * 0.55, battleState.playerBuildings, true, '#2980b9');
+        drawArenaKingdom(cv.width * 0.85, cv.height * 0.55, battleState.enemyBuildings, false, '#c0392b');
+
+        // Юниты
+        for (let u of battleState.units) {
+          ctx.fillStyle = u.side === 'player' ? '#3498db' : '#e74c3c';
+          ctx.beginPath();
+          ctx.arc(u.x, u.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.strokeStyle = '#bdc3c7';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          let swing = Math.sin(battleState.timer * 10 + u.offset) * 5;
+          ctx.moveTo(u.x, u.y-4);
+          ctx.lineTo(u.x + (u.side === 'player' ? 8 : -8), u.y - 12 + swing);
+          ctx.stroke();
+        }
+
+        // Текст
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Твоя Армия', cv.width * 0.15, cv.height * 0.85);
+        ctx.fillText('Враг', cv.width * 0.85, cv.height * 0.85);
+        
+        let timerText = battleState.timer < 2 ? "Марш..." : (battleState.timer < 4.5 ? "Битва!" : (battleState.playerWin ? "Победа!" : "Поражение..."));
+        ctx.font = 'bold 30px sans-serif';
+        ctx.fillStyle = '#ffd966';
+        ctx.fillText(timerText, cv.width / 2, cv.height * 0.2);
+      }
+
+      // Отрисовка Королевства (Замок + Здания)
+      function drawArenaKingdom(cx, cy, buildings, isPlayer, mainColor) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        
+        // Основа замка
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-50, -80, 100, 80);
+        
+        for(let i=-50; i<50; i+=20) ctx.fillRect(i, -90, 10, 10);
+
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.moveTo(-60, -80); ctx.lineTo(0, -130); ctx.lineTo(60, -80);
+        ctx.closePath(); ctx.fill();
+
+        // Флаг
+        ctx.fillStyle = '#d4af37';
+        ctx.fillRect(-2, -160, 4, 30);
+        ctx.fillStyle = mainColor;
+        ctx.beginPath();
+        ctx.moveTo(2, -160); ctx.lineTo(30, -145); ctx.lineTo(2, -130);
+        ctx.fill();
+
+        // Отрисовка зданий вокруг замка (полукругом)
+        let displayBuildings = buildings.slice(0, 15); // Максимум 15 зданий
+        for (let i = 0; i < displayBuildings.length; i++) {
+            let b = displayBuildings[i];
+            let def = S[b.type];
+            if (!def) continue;
+
+            let angle = (i / Math.max(1, displayBuildings.length - 1)) * Math.PI;
+            if (isPlayer) angle = -angle; // Игрок слева, здания справа от замка
+            
+            // Радиус, на котором стоят здания
+            let radiusX = 70 + (i % 3) * 30;
+            let radiusY = 40 + (i % 2) * 20;
+            
+            let bx = Math.cos(angle) * radiusX;
+            let by = Math.sin(angle) * radiusY + 10; // Смещение вниз
+
+            // Рисуем домик
+            ctx.fillStyle = bcolor(b.type).l;
+            ctx.fillRect(bx - 12, by - 15, 24, 15);
+            ctx.fillStyle = bcolor(b.type).r;
+            ctx.beginPath();
+            ctx.moveTo(bx - 15, by - 15); ctx.lineTo(bx, by - 25); ctx.lineTo(bx + 15, by - 15);
+            ctx.fill();
+            
+            // Иконка здания
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(def.icon, bx, by - 7);
+        }
+        
+        ctx.restore();
+      }
+
+      // ============ ОСТАЛЬНАЯ ИГРА (БЕЗ ИЗМЕНЕНИЙ) ============
       function makeTreeAt(gx, gy) {
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
         if (anyOcc(gx, gy, 1)) return false;
-        for (var i = 0; i < trees.length; i++) {
-          if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return false;
-        }
+        for (var i = 0; i < trees.length; i++) { if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return false; }
         var type = Math.floor(Math.random() * TREE_TYPES.length);
         trees.push({ gx: gx, gy: gy, x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, size: 0.55 + Math.random() * 0.5, phase: Math.random() * Math.PI * 2, sway: 0.5 + Math.random() * 0.5, type: type, hp: 3, chopPhase: 0, choppedBy: null, age: 0, growDur: 2 + Math.random() * 2 });
         return true;
@@ -587,6 +820,11 @@
       }
 
       function render() {
+        if (battleState.active) {
+          renderBattle();
+          return;
+        }
+
         ctx.clearRect(0, 0, cv.width, cv.height); drawGround();
         var items = [];
         for (var i = 0; i < trees.length; i++) items.push({ y: trees[i].y, kind: 'tree', data: trees[i] });
@@ -602,11 +840,17 @@
       var lastR = performance.now();
       function loop(ts) {
         var dt = (ts - lastR) / 1000; if (!dt || dt > 0.5) dt = 0.016; lastR = ts;
-        updateForest(dt); updateCitizens(dt); render(); requestAnimationFrame(loop);
+        if (battleState.active) {
+          updateBattle(dt);
+        } else {
+          updateForest(dt); updateCitizens(dt);
+        }
+        render(); requestAnimationFrame(loop);
       }
       requestAnimationFrame(loop);
 
       function tick() {
+        if (battleState.active) return;
         var now = Date.now(), dt = Math.min((now - state.lastTick) / 1000, 2); state.lastTick = now;
         var gr = 0, wr = 0;
         for (var i = 0; i < state.buildings.length; i++) {
@@ -754,7 +998,11 @@
       }
       
       document.getElementById('findBtn').onclick = findOpponent;
-      document.getElementById('mclose').onclick = function() { document.getElementById('modal').style.display = 'none'; };
+      document.getElementById('mclose').onclick = function() { 
+        document.getElementById('modal').style.display = 'none'; 
+        battleState.active = false;
+        document.body.classList.remove('in-battle');
+      };
 
       load(); generateTrees();
       for (var i = 0; i < state.buildings.length; i++) {
@@ -769,29 +1017,21 @@
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
 
-      // АВТООБНОВЛЕНИЕ SERVICE WORKER
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('sw.js').then(function(reg) {
             console.log('ServiceWorker зарегистрирован!');
-            
             reg.onupdatefound = function() {
               var installingWorker = reg.installing;
               installingWorker.onstatechange = function() {
                 if (installingWorker.state === 'installed') {
-                  if (navigator.serviceWorker.controller) {
-                    console.log('Доступно обновление, перезагрузка...');
-                    window.location.reload();
-                  }
+                  if (navigator.serviceWorker.controller) window.location.reload();
                 }
               };
             };
-          }, function(err) {
-            console.log('Ошибка ServiceWorker: ', err);
-          });
+          }, function(err) { console.log('Ошибка ServiceWorker: ', err); });
         });
       }
-
     })();
   </script>
 </body>
