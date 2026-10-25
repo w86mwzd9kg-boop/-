@@ -4,9 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-  <title>Kingdom Runner 1.9 — Forest Regrowth</title>
+  <title>Kingdom Runner — Forest Regrowth</title>
   
-  <!-- PWA и Онлайн -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1e12">
 
@@ -97,7 +96,6 @@
     .btn.primary:active { transform: translateY(4px); box-shadow: 0 0 0 #7a5d0e }
     .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 0 #5a0e05 }
     .btn.danger:active { transform: translateY(4px); box-shadow: 0 0 0 #5a0e05 }
-    .btn:disabled { opacity: .5; cursor: wait }
 
     .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem }
     .banner small { display: block; color: #b8d9a8; font-weight: normal; margin-top: 2px; font-size: .75rem }
@@ -199,9 +197,9 @@
   <!-- Firebase Подключение и Игра -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, onDisconnect, get, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, onDisconnect, get, off, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // Ваши ключи Firebase
+    // Ключи Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyCvr3N350SeY-UImZfqxvRQbte6lhLeA7g",
       authDomain: "kingdom-online-ef88b.firebaseapp.com",
@@ -266,51 +264,95 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // ============ ЛОГИКА ОНЛАЙН-БОЯ FIREBASE ============
-      function findOpponent() {
-        var btn = document.getElementById('findBtn');
-        btn.disabled = true;
-        btn.textContent = '🔎 Поиск в сети...';
-        addLog('Поиск реального игрока...');
+      // ============ УЛУЧШЕННАЯ ЛОГИКА ПОИСКА (БЕЗ ОШИБОК) ============
+      let isMatching = false;
+      let matchListener = null;
 
-        var playersRef = ref(db, 'matchmaking');
-        
-        // Подключаемся к очереди и слушаем изменения
-        onValue(playersRef, function(snapshot) {
-          var players = snapshot.val();
-          
-          if (!players) {
-            // Очередь пуста, добавляем себя
-            var myRef = ref(db, 'matchmaking/' + myPlayerId);
-            set(myRef, { army: state.army, defense: calcDefense() });
-            onDisconnect(myRef).remove(); // Если выйдем - удалимся из очереди
+      function findOpponent() {
+        if (isMatching) {
+          // Отмена поиска
+          isMatching = false;
+          if (matchListener) {
+            off(ref(db, 'matchmaking'), 'value', matchListener);
+            matchListener = null;
+          }
+          remove(ref(db, 'matchmaking/' + myPlayerId));
+          const btn = document.getElementById('findBtn');
+          btn.disabled = false;
+          btn.textContent = '⚔️ Бой';
+          addLog('🚫 Поиск отменен');
+          return;
+        }
+
+        isMatching = true;
+        const btn = document.getElementById('findBtn');
+        btn.disabled = false; // Не блокируем кнопку, чтобы можно было отменить
+        btn.textContent = '⏳ Отменить';
+        addLog('Поиск игрока...');
+
+        const myData = { id: myPlayerId, army: state.army, defense: calcDefense() };
+        const myRef = ref(db, 'matchmaking/' + myPlayerId);
+
+        // Встаем в очередь
+        set(myRef, { ...myData, status: 'waiting' });
+        onDisconnect(myRef).remove();
+
+        matchListener = onValue(ref(db, 'matchmaking'), (snapshot) => {
+          if (!isMatching) return;
+          const players = snapshot.val();
+          if (!players) return;
+
+          // 1. Проверяем, не спарил ли нас кто-то другой
+          if (players[myPlayerId] && players[myPlayerId].status === 'matched') {
+            const oppData = players[myPlayerId].opponent;
+            finishMatch(oppData);
             return;
           }
 
-          // Проверяем, есть ли кто-то кроме нас
-          var opponentIds = Object.keys(players).filter(function(id) { return id !== myPlayerId; });
+          // 2. Ищем соперника
+          const oppId = Object.keys(players).find(id => id !== myPlayerId && players[id].status === 'waiting');
 
-          if (opponentIds.length > 0) {
-            // Нашли соперника!
-            var oppId = opponentIds[0];
-            var oppData = players[oppId];
+          if (oppId) {
+            const oppData = players[oppId];
 
-            // Удаляем себя и его из очереди
-            remove(ref(db, 'matchmaking/' + myPlayerId));
-            remove(ref(db, 'matchmaking/' + oppId));
-            off(playersRef); // Отписываемся от поиска
-
-            btn.disabled = false;
-            btn.textContent = '⚔️ Бой';
-            addLog('✅ Соперник найден!');
-            startRealBattle(oppData);
-          } else {
-            // Мы в очереди, но больше никого нет. Убеждаемся что мы точно там
-            var myRef = ref(db, 'matchmaking/' + myPlayerId);
-            set(myRef, { army: state.army, defense: calcDefense() });
-            onDisconnect(myRef).remove();
+            // Берем на себя роль "хоста", если наш ID меньше (алфавитно).
+            // Это защищает от ситуации, когда оба пытаются схватить друг друга одновременно.
+            if (myPlayerId < oppId) {
+              const oppRef = ref(db, 'matchmaking/' + oppId);
+              runTransaction(oppRef, (currentData) => {
+                if (currentData && currentData.status === 'waiting') {
+                  currentData.status = 'matched';
+                  currentData.opponent = myData;
+                  return currentData;
+                }
+                return currentData;
+              }).then((result) => {
+                if (result.committed && result.snapshot.val() && result.snapshot.val().opponent && result.snapshot.val().opponent.id === myPlayerId) {
+                  finishMatch(oppData);
+                }
+              });
+            }
           }
         });
+      }
+
+      function finishMatch(opponentData) {
+        if (!isMatching) return;
+        isMatching = false;
+
+        if (matchListener) {
+          off(ref(db, 'matchmaking'), 'value', matchListener);
+          matchListener = null;
+        }
+
+        remove(ref(db, 'matchmaking/' + myPlayerId));
+
+        const btn = document.getElementById('findBtn');
+        btn.disabled = false;
+        btn.textContent = '⚔️ Бой';
+        addLog('✅ Соперник найден!');
+
+        startRealBattle(opponentData);
       }
 
       function calcDefense() {
@@ -361,7 +403,6 @@
       }
 
       // ============ ОСТАЛЬНАЯ ИГРА (Деревья, Жители, Рисование, UI) ============
-      // (Функции ниже без изменений, взяты из вашей рабочей версии)
       
       function makeTreeAt(gx, gy) {
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
@@ -844,6 +885,7 @@
         if (r.maxWins !== Infinity && state.wins >= r.maxWins && state.rankIndex < RANKS.length - 1) { state.rankIndex++; addLog('🎉 Ранг: ' + RANKS[state.rankIndex].name); renderShop(); }
       }
       
+      // Привязка кнопки к новой улучшенной функции
       document.getElementById('findBtn').onclick = findOpponent;
       document.getElementById('mclose').onclick = function() { document.getElementById('modal').style.display = 'none'; };
 
@@ -856,11 +898,10 @@
         }
       }
       renderShop(); updateHUD();
-      addLog('🏁 Kingdom Runner загружен. Онлайн активен!');
+      addLog('🏁 Kingdom Runner загружен. Онлайн готов!');
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
 
-      // PWA Регистрация (Офлайн режим)
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('sw.js').then(function(reg) {
