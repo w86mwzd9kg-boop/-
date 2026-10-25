@@ -7,7 +7,7 @@
   <meta http-equiv="Expires" content="0">
   
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-  <title>Kingdom Runner — Shaders Edition</title>
+  <title>Kingdom Runner — Epic Battles</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1e12">
@@ -127,6 +127,11 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
+    // ==========================================
+    // ВЕРСИЯ ИГРЫ (ОБНОВЛЯЙТЕ ПРИ КАЖДОМ ИЗМЕНЕНИИ КОДА)
+    const GAME_VERSION = "1.0"; 
+    // ==========================================
+
     const firebaseConfig = {
       apiKey: "AIzaSyCvr3N350SeY-UImZfqxvRQbte6lhLeA7g",
       authDomain: "kingdom-online-ef88b.firebaseapp.com",
@@ -219,8 +224,22 @@
           spawnParticles(w.x + (Math.random()-0.5)*1000/cam.zoom, w.y + (Math.random()-0.5)*1000/cam.zoom, 1, '#ffd966', 10, 2, 3);
       }, 150);
 
-      // ============ БИТВА И ПОИСК ============
-      var battleState = { active: false, timer: 0, duration: 6.0, playerWin: false, resultLog: '', playerArmy: 0, enemyArmy: 0, playerBuildings: [], enemyBuildings: [], units: [], clashParticles: false };
+      // ============ БИТВА ============
+      var battleState = { 
+          active: false, 
+          phase: 'defend', 
+          timer: 0, 
+          duration: 4.5, 
+          playerWin: false, 
+          resultLog: '', 
+          playerArmy: 0, 
+          enemyArmy: 0, 
+          playerBuildings: [], 
+          enemyBuildings: [], 
+          units: [], 
+          clashParticles: false, 
+          wallBonus: 0 
+      };
 
       function mulberry32(a) { return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
 
@@ -231,7 +250,6 @@
 
       function findOpponent() {
         if (isMatching) { 
-            // Отмена поиска
             isMatching = false; 
             if (matchTimer) clearInterval(matchTimer);
             if (currentQueueRef) off(currentQueueRef); 
@@ -265,7 +283,6 @@
             if (timeLeft > 0) {
                 document.getElementById('findBtn').textContent = '⏳ Поиск (' + timeLeft + 'с)...';
             } else {
-                // Время вышло - призываем бота
                 clearInterval(matchTimer);
                 off(currentQueueRef);
                 remove(myRef);
@@ -285,11 +302,34 @@
               document.getElementById('findBtn').textContent = '⚔️ Бой';
               remove(myRef); remove(ref(db, arenaPath + '/' + oppId));
 
-              let pPower = state.army * (1 + calcDefense() * 0.02); let ePower = oppData.army * (1 + oppData.defense * 0.02);
-              let seed = Math.floor((pPower + ePower) * 10000) % 999999; let rand = mulberry32(seed);
-              pPower += rand() * 10; ePower += rand() * 10; let hostWin = pPower > ePower;
-              let resultObj = { win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower, enemyArmy: oppData.army, enemyDefense: oppData.defense, hostBuildings: myBuildings, enemyBuildings: oppData.buildings || [], isBot: false };
-              set(ref(db, 'battles/' + oppId), { result: { win: !hostWin, seed: seed, playerPower: ePower, enemyPower: pPower, enemyArmy: state.army, enemyDefense: calcDefense(), enemyBuildings: myBuildings, hostBuildings: oppData.buildings || [], isBot: false }});
+              // Бонус стен (со 2 арены)
+              let pWalls = state.buildings.filter(b => b.type === 'wall').length;
+              let eWalls = (oppData.buildings || []).filter(b => b.type === 'wall').length;
+              let pWallBonus = state.rankIndex >= 1 ? pWalls * 10 : 0;
+              let eWallBonus = state.rankIndex >= 1 ? eWalls * 10 : 0;
+
+              let pPower = state.army * (1 + calcDefense() * 0.02) + pWallBonus;
+              let ePower = oppData.army * (1 + oppData.defense * 0.02) + eWallBonus;
+              
+              let seed = Math.floor((pPower + ePower) * 10000) % 999999; 
+              let rand = mulberry32(seed);
+              pPower += rand() * 10; ePower += rand() * 10; 
+              let hostWin = pPower > ePower;
+              
+              let resultObj = { 
+                win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower, 
+                enemyArmy: oppData.army, enemyDefense: oppData.defense, 
+                hostBuildings: myBuildings, enemyBuildings: oppData.buildings || [], 
+                isBot: false, wallBonus: pWallBonus
+              };
+              
+              set(ref(db, 'battles/' + oppId), { result: { 
+                win: !hostWin, seed: seed, playerPower: ePower, enemyPower: pPower, 
+                enemyArmy: state.army, enemyDefense: calcDefense(), 
+                enemyBuildings: myBuildings, hostBuildings: oppData.buildings || [], 
+                isBot: false, wallBonus: eWallBonus
+              }});
+              
               startBattleAnimation(resultObj);
             }
           }
@@ -307,7 +347,6 @@
         });
       }
 
-      // ============ УМНЫЙ БОТ ============
       function startBotMatch() {
           isMatching = false;
           document.getElementById('findBtn').textContent = '⚔️ Бой';
@@ -320,11 +359,7 @@
           
           let botBuildings = [];
           let slots = [];
-          for(let x = 2; x < COLS - 2; x += 4) {
-              for(let y = 2; y < ROWS/2 - 2; y += 4) {
-                  slots.push({x, y});
-              }
-          }
+          for(let x = 2; x < COLS - 2; x += 4) { for(let y = 2; y < ROWS - 2; y += 4) { slots.push({x, y}); } }
           slots.sort(() => Math.random() - 0.5);
           
           for (let i = 0; i < Math.min(numBuildings, slots.length); i++) {
@@ -332,16 +367,24 @@
               botBuildings.push({ type: bType, gx: slots[i].x, gy: slots[i].y, level: 1 });
           }
 
-          let pPower = state.army * (1 + calcDefense() * 0.02);
-          let ePower = botArmy * (1 + botDefense * 0.02);
-          let seed = Math.floor((pPower + ePower) * 10000) % 999999; let rand = mulberry32(seed);
-          pPower += rand() * 10; ePower += rand() * 10; let hostWin = pPower > ePower;
+          let pWalls = state.buildings.filter(b => b.type === 'wall').length;
+          let eWalls = botBuildings.filter(b => b.type === 'wall').length;
+          let pWallBonus = state.rankIndex >= 1 ? pWalls * 10 : 0;
+          let eWallBonus = state.rankIndex >= 1 ? eWalls * 10 : 0;
+
+          let pPower = state.army * (1 + calcDefense() * 0.02) + pWallBonus;
+          let ePower = botArmy * (1 + botDefense * 0.02) + eWallBonus;
+          
+          let seed = Math.floor((pPower + ePower) * 10000) % 999999; 
+          let rand = mulberry32(seed);
+          pPower += rand() * 10; ePower += rand() * 10; 
+          let hostWin = pPower > ePower;
 
           let resultObj = {
               win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower,
               enemyArmy: botArmy, enemyDefense: botDefense,
               hostBuildings: state.buildings.map(b => ({ type: b.type, gx: b.gx, gy: b.gy, level: b.level })),
-              enemyBuildings: botBuildings, isBot: true
+              enemyBuildings: botBuildings, isBot: true, wallBonus: pWallBonus
           };
 
           setTimeout(() => { startBattleAnimation(resultObj); }, 500);
@@ -355,90 +398,216 @@
 
       function startBattleAnimation(result) {
         document.body.classList.add('in-battle');
-        battleState.active = true; battleState.timer = 0; battleState.playerWin = result.win;
-        battleState.playerArmy = state.army; battleState.enemyArmy = result.enemyArmy;
-        battleState.playerBuildings = result.hostBuildings || []; battleState.enemyBuildings = result.enemyBuildings || [];
-        battleState.units = []; battleState.clashParticles = false; particles = [];
-        let rand = mulberry32(result.seed); let totalUnits = 50;
-        let myUnits = Math.max(10, Math.floor(totalUnits * (state.army / (state.army + result.enemyArmy + 1)))); let enemyUnits = Math.max(10, totalUnits - myUnits);
-        for(let i=0; i<myUnits; i++) battleState.units.push({ side: 'player', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.9 - rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10 });
-        for(let i=0; i<enemyUnits; i++) battleState.units.push({ side: 'enemy', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.1 + rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10 });
+        battleState.active = true; 
+        battleState.phase = 'defend'; // Начинаем с обороны
+        battleState.timer = 0; 
+        battleState.playerWin = result.win;
+        battleState.playerArmy = state.army; 
+        battleState.enemyArmy = result.enemyArmy;
+        battleState.playerBuildings = result.hostBuildings || []; 
+        battleState.enemyBuildings = result.enemyBuildings || [];
+        battleState.units = []; 
+        battleState.clashParticles = false; 
+        particles = [];
+        battleState.seed = result.seed;
+        battleState.wallBonus = result.wallBonus;
         
         let enemyName = result.isBot ? 'Бот' : 'Живой Игрок';
-        battleState.resultLog = '⚔️ Против: ' + enemyName + '<br>🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
+        battleState.resultLog = '⚔️ Против: ' + enemyName + '<br>🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + (battleState.wallBonus > 0 ? ' +стены ' + battleState.wallBonus : '') + ')<br>🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
+        
+        prepareBattlePhase();
+      }
+
+      function prepareBattlePhase() {
+        battleState.timer = 0;
+        battleState.units = [];
+        battleState.clashParticles = false;
+        let rand = mulberry32(battleState.seed);
+        
+        let isDefend = battleState.phase === 'defend';
+        let defBuildings = isDefend ? battleState.playerBuildings : battleState.enemyBuildings;
+        let attArmy = isDefend ? battleState.enemyArmy : battleState.playerArmy;
+        
+        // Находим центр базы для цели
+        let targetX = COLS / 2;
+        let targetY = ROWS / 2;
+        if (defBuildings.length > 0) {
+            let sumX = 0, sumY = 0;
+            defBuildings.forEach(b => { sumX += b.gx; sumY += b.gy; });
+            targetX = sumX / defBuildings.length;
+            targetY = sumY / defBuildings.length;
+        }
+
+        // Спавним атакующих (враги сверху, мы снизу)
+        let numUnits = Math.min(60, Math.max(15, Math.floor(attArmy / 5)));
+        for(let i=0; i<numUnits; i++) {
+            battleState.units.push({
+                side: isDefend ? 'enemy' : 'player',
+                x: (isDefend ? Math.random() * COLS : Math.random() * COLS),
+                y: (isDefend ? -2 : ROWS + 2), // Спавн за краем карты
+                targetGX: targetX + (rand() - 0.5) * 10,
+                targetGY: targetY + (rand() - 0.5) * 10,
+                speed: 5 + rand() * 5,
+                progress: 0
+            });
+        }
       }
 
       function updateBattle(dt) {
         if (!battleState.active) return;
         battleState.timer += dt;
-        if (battleState.timer > 2.5 && battleState.timer < 4.5 && !battleState.clashParticles) { battleState.clashParticles = true; spawnParticles(cv.width/2, cv.height/2, 50, '#ffd700', 300, 4, 1.5); }
+
         for (let u of battleState.units) {
-          if (battleState.timer < 2.5) { let dx = u.targetX - u.x; let dy = u.targetY - u.y; let dist = Math.sqrt(dx*dx + dy*dy); if (dist > 5) { u.x += (dx / dist) * u.speed * dt; u.y += (dy / dist) * u.speed * dt; } }
-          else if (battleState.timer < 4.5) { u.x += (Math.random() - 0.5) * 40 * dt; u.y += (Math.random() - 0.5) * 40 * dt; if(Math.random() > 0.9) spawnParticles(u.x, u.y, 1, u.side === 'player' ? '#3498db' : '#e74c3c', 50, 2, 0.5); }
-          else { u.x += (u.side === 'player' ? (battleState.playerWin ? 1 : -1) : (battleState.playerWin ? -1 : 1)) * u.speed * dt; }
+            // Движение к цели
+            let dx = u.targetGX - u.x;
+            let dy = u.targetGY - u.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 1) {
+                u.x += (dx / dist) * u.speed * dt;
+                u.y += (dy / dist) * u.speed * dt;
+                u.progress += u.speed * dt;
+            }
+            
+            // Анимация боя при достижении цели
+            if (dist <= 1 && Math.random() > 0.9) {
+                let screenPos = w2s(u.x * GS, u.y * GS);
+                spawnParticles(screenPos.x, screenPos.y, 1, u.side === 'player' ? '#3498db' : '#e74c3c', 50, 2, 0.5);
+            }
         }
-        if (battleState.timer >= battleState.duration) {
-          battleState.active = false; document.body.classList.remove('in-battle');
-          if (battleState.playerWin) {
-            var gr = 30 + Math.floor(battleState.enemyArmy * 1.2); var wr = 15 + Math.floor(battleState.enemyArmy * 0.8); var loss = Math.floor(battleState.playerArmy * 0.15);
+
+        // Смена фаз
+        if (battleState.phase === 'defend' && battleState.timer > 4.0) {
+            battleState.phase = 'attack';
+            addLog('⚔️ Ваша очередь атаковать!');
+            prepareBattlePhase();
+        } else if (battleState.phase === 'attack' && battleState.timer > 4.0) {
+            battleState.phase = 'result';
+            battleState.timer = 0;
+            endBattleAndShowResult();
+        }
+      }
+
+      function endBattleAndShowResult() {
+        battleState.active = false; 
+        document.body.classList.remove('in-battle');
+        
+        if (battleState.playerWin) {
+            var gr = 30 + Math.floor(battleState.enemyArmy * 1.2); 
+            var wr = 15 + Math.floor(battleState.enemyArmy * 0.8); 
+            var loss = Math.floor(battleState.playerArmy * 0.15);
             state.gold += gr; state.wood += wr; state.army = Math.max(5, battleState.playerArmy - loss); state.wins++;
-            battleState.resultLog += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии'; addLog('✅ Победа!');
-          } else {
+            battleState.resultLog += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии'; 
+            addLog('✅ Победа!');
+        } else {
             var loss = Math.floor(battleState.playerArmy * 0.4);
             state.army = Math.max(3, battleState.playerArmy - loss); state.gold = Math.max(0, state.gold - 20); state.wood = Math.max(0, state.wood - 15);
-            battleState.resultLog += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵'; addLog('❌ Поражение!');
-          }
-          checkRank(); save(); updateHUD(); renderShop();
-          document.getElementById('mtitle').textContent = battleState.playerWin ? '🏆 Победа!' : '💔 Поражение';
-          document.getElementById('mcontent').innerHTML = '<div class="blog">' + battleState.resultLog + '</div>';
-          document.getElementById('modal').style.display = 'flex';
+            battleState.resultLog += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵'; 
+            addLog('❌ Поражение!');
         }
+        checkRank(); save(); updateHUD(); renderShop();
+        document.getElementById('mtitle').textContent = battleState.playerWin ? '🏆 Победа!' : '💔 Поражение';
+        document.getElementById('mcontent').innerHTML = '<div class="blog">' + battleState.resultLog + '</div>';
+        document.getElementById('modal').style.display = 'flex';
       }
 
+      // ============ ОТРИСОВКА КАРТЫ БИТВЫ ============
       function renderBattle() {
         var w2 = cv.width / 2, h2 = cv.height / 2;
-        var bgGrad = ctx.createLinearGradient(0, 0, 0, cv.height); bgGrad.addColorStop(0, '#1a2a3a'); bgGrad.addColorStop(0.5, '#2c1e16'); bgGrad.addColorStop(1, '#0a1a0a'); ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, cv.width, cv.height);
-        var fog = ctx.createRadialGradient(w2, h2, 50, w2, h2, cv.width); fog.addColorStop(0, 'rgba(0,0,0,0)'); fog.addColorStop(1, 'rgba(20,10,10,0.8)'); ctx.fillStyle = fog; ctx.fillRect(0, 0, cv.width, cv.height);
-        drawVoxelCastle(w2, cv.height * 0.95, true, '#2980b9'); drawVoxelCastle(w2, cv.height * 0.05, false, '#c0392b');
-        drawArenaBuildings(battleState.enemyBuildings, true, h2); drawArenaBuildings(battleState.playerBuildings, false, h2);
-        for (let u of battleState.units) {
-          ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.ellipse(u.x, u.y + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
-          ctx.shadowColor = u.side === 'player' ? '#3498db' : '#e74c3c'; ctx.shadowBlur = 10;
-          ctx.fillStyle = u.side === 'player' ? '#5dade2' : '#f1948a'; ctx.beginPath(); ctx.arc(u.x, u.y, 6, 0, Math.PI * 2); ctx.fill();
-          ctx.shadowBlur = 5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); let swing = Math.sin(battleState.timer * 20 + u.swing) * 15; ctx.moveTo(u.x, u.y-3); ctx.lineTo(u.x, u.y - 15 + (battleState.timer > 2.5 && battleState.timer < 4.5 ? swing : 0)); ctx.stroke(); ctx.shadowBlur = 0;
+        var bgGrad = ctx.createLinearGradient(0, 0, 0, cv.height); 
+        bgGrad.addColorStop(0, '#1a2a3a'); bgGrad.addColorStop(1, '#0a1a0a'); 
+        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, cv.width, cv.height);
+
+        let isDefend = battleState.phase === 'defend';
+        let buildings = isDefend ? battleState.playerBuildings : battleState.enemyBuildings;
+        
+        // Рисуем сетку карты (Земля)
+        let scale = Math.min(cv.width / (COLS * GS), cv.height / (ROWS * GS)) * 1.2;
+        let offX = (cv.width - COLS * GS * scale) / 2;
+        let offY = (cv.height - ROWS * GS * scale) / 2;
+
+        // Фон карты
+        ctx.fillStyle = isDefend ? '#2c1e16' : '#1a2a16'; // Красноватый для защиты, зеленоватый для атаки
+        ctx.fillRect(offX, offY, COLS * GS * scale, ROWS * GS * scale);
+
+        // Текстура
+        for (let x = 0; x < COLS; x+=2) {
+            for (let y = 0; y < ROWS; y+=2) {
+                if ((x+y)%4 === 0) { ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(offX + x*GS*scale, offY + y*GS*scale, 2*GS*scale, 2*GS*scale); }
+            }
         }
-        drawParticles();
-        ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
-        let text = battleState.timer < 2.5 ? "МАРШ!" : (battleState.timer < 4.5 ? "В БОЙ!" : (battleState.playerWin ? "ПОБЕДА!" : "ПОРАЖЕНИЕ")); ctx.fillText(text, w2, h2); ctx.shadowBlur = 0;
-      }
 
-      function drawVoxelCastle(x, y, isPlayer, color) {
-        ctx.save(); ctx.translate(x, y);
-        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.ellipse(0, 10, 60, 20, 0, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#666'; ctx.fillRect(-40, isPlayer ? -60 : 0, 80, 60);
-        for(let i=-40; i<40; i+=20) { ctx.fillStyle = '#777'; ctx.fillRect(i, isPlayer ? -70 : 50, 10, 10); }
-        ctx.fillStyle = color; ctx.beginPath();
-        if (isPlayer) { ctx.moveTo(-50, -60); ctx.lineTo(0, -100); ctx.lineTo(50, -60); } else { ctx.moveTo(-50, 60); ctx.lineTo(0, 100); ctx.lineTo(50, 60); }
-        ctx.closePath(); ctx.fill();
-        ctx.shadowColor = '#ffd966'; ctx.shadowBlur = 15; ctx.fillStyle = '#ffd966'; ctx.fillRect(-10, isPlayer ? -40 : 20, 20, 20); ctx.shadowBlur = 0; ctx.restore();
-      }
-
-      function drawArenaBuildings(buildings, isEnemy, midY) {
-        if (!buildings || buildings.length === 0) return;
-        let scaleX = cv.width / COLS; let scaleY = midY / (ROWS / 2 + 2); 
+        // Рисуем постройки
         buildings.forEach(b => {
-            let def = S[b.type]; if (!def) return;
-            let bx = b.gx * scaleX + scaleX/2; let by = isEnemy ? (midY - ((ROWS - b.gy) * scaleY) - 20) : (midY + (b.gy * scaleY) + 20);
-            if (bx < 0 || bx > cv.width || by < 0 || by > cv.height) return;
-            let sz = scaleX * def.size * 0.8; let col = bcolor(b.type);
-            ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(bx, by + sz*0.3, sz*0.6, sz*0.3, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = col.l; ctx.fillRect(bx - sz/2, by - sz/2, sz, sz);
-            ctx.fillStyle = col.d; ctx.fillRect(bx + sz/2, by - sz/2, sz*0.2, sz);
-            ctx.fillStyle = col.r; ctx.beginPath(); ctx.moveTo(bx - sz/2, by - sz/2); ctx.lineTo(bx, by - sz/2 - sz*0.3); ctx.lineTo(bx + sz/2 + sz*0.2, by - sz/2); ctx.closePath(); ctx.fill();
-            ctx.font = (sz * 0.6) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.shadowColor = '#fff'; ctx.shadowBlur = 8; ctx.fillText(def.icon, bx, by); ctx.shadowBlur = 0;
+            let bx = offX + b.gx * GS * scale;
+            let by = offY + b.gy * GS * scale;
+            drawBattleBuilding(bx, by, b.type, scale, isDefend);
         });
+
+        // Рисуем юнитов
+        battleState.units.forEach(u => {
+            let ux = offX + u.x * GS * scale;
+            let uy = offY + u.y * GS * scale;
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath(); ctx.ellipse(ux, uy + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+
+            ctx.shadowColor = u.side === 'player' ? '#3498db' : '#e74c3c'; 
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = u.side === 'player' ? '#5dade2' : '#f1948a'; 
+            ctx.beginPath(); ctx.arc(ux, uy, 6, 0, Math.PI * 2); ctx.fill();
+            
+            // Меч
+            ctx.shadowBlur = 5; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; 
+            ctx.beginPath(); 
+            let swing = Math.sin(battleState.timer * 20 + u.x) * 5; 
+            ctx.moveTo(ux, uy-3); 
+            ctx.lineTo(ux, uy - 15 + swing); 
+            ctx.stroke(); 
+            ctx.shadowBlur = 0;
+        });
+
+        drawParticles();
+
+        // UI
+        ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center'; 
+        ctx.fillStyle = '#fff'; ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
+        let text = isDefend ? "ОБОРОНА!" : "АТАКА!";
+        ctx.fillText(text, w2, 50); 
+        
+        ctx.font = 'bold 16px sans-serif';
+        let subText = isDefend ? "Враги атакуют ваш замок!" : "Ваши войска штурмуют врага!";
+        ctx.fillText(subText, w2, 80);
+        
+        ctx.shadowBlur = 0;
       }
 
+      function drawBattleBuilding(x, y, type, scale, isDefender) {
+          let def = S[type]; if(!def) return;
+          let sz = GS * def.size * scale * 0.8;
+          let col = bcolor(type);
+          if (isDefender && type === 'wall') col = {l:'#a9a9a9', d:'#696969', r:'#808080'}; // Стены светятся при защите
+          
+          // Тень
+          ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.beginPath(); ctx.ellipse(x + sz/2, y + sz*0.8, sz*0.6, sz*0.2, 0, 0, Math.PI*2); ctx.fill();
+          
+          // 3D куб
+          ctx.fillStyle = col.l; ctx.fillRect(x, y + sz*0.2, sz, sz*0.6);
+          ctx.fillStyle = col.d; ctx.fillRect(x + sz, y + sz*0.2, sz*0.2, sz*0.6);
+          
+          // Крыша
+          ctx.fillStyle = col.r; ctx.beginPath();
+          ctx.moveTo(x, y + sz*0.2); ctx.lineTo(x + sz/2, y - sz*0.2); ctx.lineTo(x + sz, y + sz*0.2);
+          ctx.lineTo(x + sz + sz*0.2, y + sz*0.1); ctx.lineTo(x + sz/2, y - sz*0.3); ctx.lineTo(x - sz*0.2, y + sz*0.1);
+          ctx.closePath(); ctx.fill();
+
+          // Иконка
+          ctx.font = (sz * 0.5) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.shadowColor = '#fff'; ctx.shadowBlur = 5;
+          ctx.fillText(def.icon, x + sz/2, y + sz*0.5); 
+          ctx.shadowBlur = 0;
+      }
+
+      // ============ ОСТАЛЬНАЯ ИГРА ============
       function drawVoxelBuilding(b) {
         var def = S[b.type]; if (!def) return;
         var size = def.size, p = w2s(b.gx * GS, b.gy * GS), ts = GS * size * cam.zoom;
@@ -914,16 +1083,54 @@
         if (def && def.pop) { var existing = citizens.filter(function(c) { return c.homeId === b.id; }).length; for (var j = existing; j < def.pop * (b.level || 1); j++) { spawnCitizen(b.id, b.gx + (def.size - 1) / 2, b.gy + (def.size - 1) / 2, def.worker || 'wander'); } }
       }
       renderShop(); updateHUD();
-      addLog('🏁 Игра загружена. Вы на Арене ' + (state.rankIndex + 1));
+      addLog('🏁 Игра загружена. Версия: ' + GAME_VERSION + '. Вы на Арене ' + (state.rankIndex + 1));
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
+
+      // ============ АВТООБНОВЛЕНИЕ ============
+      let currentVersion = GAME_VERSION;
+
+      async function checkForUpdates() {
+        if (battleState.active) return; 
+        
+        try {
+          const response = await fetch(window.location.href, { cache: 'no-store' });
+          const html = await response.text();
+          
+          // Ищем переменную GAME_VERSION в скачанном файле
+          const match = html.match(/const GAME_VERSION = "([^"]+)";/);
+          if (match) {
+            const newVersion = match[1];
+            if (currentVersion !== newVersion) {
+              console.log('Обнаружено обновление: ' + currentVersion + ' -> ' + newVersion);
+              
+              // Очищаем Service Worker и кэш
+              if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let reg of registrations) { await reg.unregister(); }
+                const cacheNames = await caches.keys();
+                for (let name of cacheNames) { await caches.delete(name); }
+              }
+              
+              // Принудительная перезагрузка
+              window.location.reload(true);
+            }
+          }
+        } catch (e) {
+          // Нет интернета, играем офлайн
+        }
+      }
+
+      setInterval(checkForUpdates, 20000);
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('sw.js').then(function(reg) {
             console.log('ServiceWorker зарегистрирован!');
-            reg.onupdatefound = function() { var installingWorker = reg.installing; installingWorker.onstatechange = function() { if (installingWorker.state === 'installed') { if (navigator.serviceWorker.controller) window.location.reload(); } }; };
-          }, function(err) { console.log('Ошибка ServiceWorker: ', err); });
+            checkForUpdates(); 
+          }, function(err) {
+            console.log('Ошибка ServiceWorker: ', err);
+          });
         });
       }
     })();
