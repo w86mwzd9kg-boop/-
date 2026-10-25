@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
+  <title>Kingdom Runner 1.9 — Forest Regrowth</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1e12;
+      touch-action: none
+    }
+
+    canvas {
+      display: block;
+      cursor: crosshair;
+      touch-action: none
+    }
+
+    .hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 10;
+      flex-wrap: wrap
+    }
+
+    .hud>* {
+      pointer-events: auto
+    }
+
+    .resources {
+      display: flex;
+      gap: 10px;
+      background: rgba(20, 40, 25, .92);
+      padding: 10px 18px;
+      border-radius: 40px;
+      border: 2px solid #d4af37;
+      flex-wrap: wrap
+    }
+
+    .res-item {
+      color: #f5e6b0;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem
+    }
+
+    .res-item span {
+      background: #0e2b18;
+      padding: 3px 12px;
+      border-radius: 20px;
+      min-width: 60px;
+      text-align: center;
+      border: 1px solid #8b6914;
+      color: #fff8e7
+    }
+
+    .rank-badge {
+      background: rgba(20, 40, 25, .92);
+      padding: 10px 22px;
+      border-radius: 40px;
+      border: 2px solid #ffd966;
+      color: #ffd966;
+      font-weight: bold;
+      font-size: 1rem
+    }
+
+    /* ===== МАГАЗИН ===== */
+    .shop {
+      position: fixed;
+      right: 12px;
+      top: 90px;
+      bottom: 12px;
+      width: 220px;
+      background: rgba(15, 32, 20, .94);
+      border: 2px solid #d4af37;
+      border-radius: 20px;
+      padding: 12px;
+      overflow-y: auto;
+      z-index: 10;
+      transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s;
+      transform-origin: right center;
+    }
+
+    .shop.collapsed {
+      transform: translateX(calc(100% + 20px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .shop h3 {
+      color: #ffd966;
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #8b6914;
+      padding-bottom: 8px
+    }
+
+    .shop-item {
+      background: #1a3320;
+      border-radius: 14px;
+      padding: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #6b8c5c;
+      cursor: pointer;
+      transition: .15s
+    }
+
+    .shop-item:hover:not(.locked):not(.selected) {
+      background: #24472e;
+      border-color: #ffd966
+    }
+
+    .shop-item.selected {
+      background: #2f5a3a;
+      border-color: #ffd966;
+      box-shadow: 0 0 12px rgba(255, 217, 102, .6)
+    }
+
+    .shop-item.locked {
+      opacity: .4;
+      cursor: not-allowed;
+      filter: grayscale(.7)
+    }
+
+    .shop-top {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .shop-icon {
+      font-size: 1.6rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0e2414;
+      border-radius: 10px;
+      flex-shrink: 0
+    }
+
+    .shop-name {
+      color: #ffeaac;
+      font-weight: 600;
+      font-size: .85rem
+    }
+
+    .shop-cost {
+      color: #b8d9a8;
+      font-size: .72rem;
+      margin-top: 2px
+    }
+
+    .shop-effect {
+      color: #cfcfb0;
+      font-size: .68rem;
+      margin-top: 3px
+    }
+
+    /* ===== КНОПКА СВОРАЧИВАНИЯ ===== */
+    .shop-toggle {
+      position: fixed;
+      right: 12px;
+      top: 52px;
+      z-index: 12;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #dbb42c, #a67c1e);
+      border: 2px solid #ffd966;
+      color: #1e2a0e;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4);
+      transition: transform .2s, background .2s;
+    }
+
+    .shop-toggle:hover {
+      background: linear-gradient(180deg, #ffd966, #dbb42c);
+      transform: scale(1.08)
+    }
+
+    .shop-toggle:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #7a5d0e
+    }
+
+    .shop-toggle .icon {
+      transition: transform .3s
+    }
+
+    .shop-toggle.collapsed .icon {
+      transform: rotate(180deg)
+    }
+
+    .bar {
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+      flex-wrap: wrap
+    }
+
+    .btn {
+      background: rgba(20, 40, 25, .92);
+      border: 2px solid #d4af37;
+      color: #ffd966;
+      padding: 10px 16px;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: .15s
+    }
+
+    .btn:hover {
+      background: #2a4a30
+    }
+
+    .btn:active {
+      transform: translateY(2px)
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, #dbb42c, #a67c1e);
+      color: #1e2a0e;
+      border-color: #ffd966;
+      box-shadow: 0 3px 0 #7a5d0e
+    }
+
+    .btn.primary:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #7a5d0e
+    }
+
+    .btn.danger {
+      background: linear-gradient(180deg, #c0392b, #8b1e0e);
+      color: #fff;
+      border-color: #e74c3c;
+      box-shadow: 0 3px 0 #5a0e05
+    }
+
+    .btn.danger:active {
+      transform: translateY(4px);
+      box-shadow: 0 0 0 #5a0e05
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: wait
+    }
+
+    .banner {
+      position: fixed;
+      top: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 60, 35, .96);
+      border: 2px solid #ffd966;
+      color: #ffeaac;
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-weight: bold;
+      z-index: 11;
+      display: none;
+      text-align: center;
+      max-width: 90%;
+      font-size: .85rem
+    }
+
+    .banner small {
+      display: block;
+      color: #b8d9a8;
+      font-weight: normal;
+      margin-top: 2px;
+      font-size: .75rem
+    }
+
+    .banner.demolish {
+      background: rgba(80, 20, 20, .96);
+      border-color: #e74c3c;
+      color: #ffcccc
+    }
+
+    .banner.demolish small {
+      color: #ff9999
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .85);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px
+    }
+
+    .modal-c {
+      background: #274427;
+      border: 4px solid #d4af37;
+      border-radius: 32px;
+      padding: 26px 22px;
+      max-width: 460px;
+      width: 100%;
+      text-align: center;
+      color: #f9f1d2
+    }
+
+    .modal-c h3 {
+      font-size: 1.8rem;
+      color: #ffd966;
+      margin-bottom: 12px
+    }
+
+    .blog {
+      background: #1a2e1a;
+      border-radius: 16px;
+      padding: 12px;
+      text-align: left;
+      font-family: monospace;
+      max-height: 220px;
+      overflow-y: auto;
+      margin: 12px 0;
+      font-size: .88rem;
+      line-height: 1.5
+    }
+
+    .mbtn {
+      background: #dbb42c;
+      border: none;
+      border-radius: 40px;
+      padding: 12px 28px;
+      font-weight: bold;
+      font-size: 1rem;
+      color: #1e2a0e;
+      cursor: pointer;
+      box-shadow: 0 4px 0 #8b6914;
+      margin: 4px
+    }
+
+    .mbtn:active {
+      transform: translateY(3px);
+      box-shadow: 0 0 0 #8b6914
+    }
+
+    .log {
+      position: fixed;
+      bottom: 70px;
+      left: 12px;
+      width: 300px;
+      max-height: 110px;
+      overflow-y: auto;
+      z-index: 9;
+      background: rgba(10, 25, 15, .85);
+      border: 1px solid #6b8c5c;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: .72rem;
+      color: #bbd9a8;
+      pointer-events: none
+    }
+
+    .log div {
+      margin-bottom: 2px
+    }
+
+    .zoom-ind {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20, 40, 25, .9);
+      border: 1px solid #d4af37;
+      color: #ffd966;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: .75rem;
+      z-index: 10;
+      font-weight: bold
+    }
+
+    .help {
+      position: fixed;
+      top: 90px;
+      left: 12px;
+      background: rgba(15, 32, 20, .94);
+      border: 2px solid #6b8c5c;
+      border-radius: 14px;
+      padding: 10px 14px;
+      color: #bbd9a8;
+      font-size: .72rem;
+      z-index: 9;
+      max-width: 230px;
+      line-height: 1.5;
+      pointer-events: none;
+      transition: opacity .4s
+    }
+
+    .help b {
+      color: #ffd966
+    }
+
+    .help.hidden {
+      opacity: 0
+    }
+
+    /* Forest counter */
+    .forest-badge {
+      position: fixed;
+      top: 52px;
+      left: 12px;
+      z-index: 10;
+      background: rgba(15, 32, 20, .92);
+      border: 2px solid #6b8c5c;
+      border-radius: 30px;
+      padding: 6px 14px;
+      color: #bbd9a8;
+      font-size: .72rem;
+      font-weight: bold;
+      pointer-events: none;
+      transition: border-color .3s;
+    }
+
+    .forest-badge.growing {
+      border-color: #8bc34a;
+      box-shadow: 0 0 10px rgba(139, 195, 74, .4)
+    }
+
+    .forest-badge b {
+      color: #8bc34a
+    }
+
+    @media(max-width:720px) {
+      .shop {
+        width: 170px;
+        top: 120px
+      }
+
+      .shop h3 {
+        font-size: .85rem
+      }
+
+      .shop-effect {
+        display: none
+      }
+
+      .log {
+        width: 170px;
+        font-size: .6rem
+      }
+
+      .shop-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem
+      }
+
+      .res-item {
+        font-size: .7rem
+      }
+
+      .res-item span {
+        min-width: 44px;
+        padding: 2px 8px
+      }
+
+      .help {
+        max-width: 160px;
+        font-size: .62rem
+      }
+
+      .shop-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+        top: 56px
+      }
+
+      .bar .btn {
+        padding: 8px 12px;
+        font-size: .75rem
+      }
+
+      .forest-badge {
+        top: 56px;
+        font-size: .62rem;
+        padding: 4px 10px
+      }
+    }
+  </style>
+</head>
+
+<body class="shop-open">
+  <canvas id="cv"></canvas>
+
+  <div class="hud">
+    <div class="resources">
+      <div class="res-item">🪙 <span id="gold">150</span></div>
+      <div class="res-item">🪵 <span id="wood">80</span></div>
+      <div class="res-item">⚔️ <span id="army">10</span></div>
+      <div class="res-item">👥 <span id="pop">0</span></div>
+      <div class="res-item">🪓 <span id="lumberCount">0</span></div>
+    </div>
+    <div class="rank-badge" id="rank">🏆 Ранг 1: Новобранец</div>
+  </div>
+
+  <div class="forest-badge" id="forestBadge">🌲 Лес: <b id="treeCount">0</b> /
+    <span id="treeMax">0</span></div>
+
+  <div class="help" id="help">
+    <b>Управление:</b><br>
+    🖱️ ЛКМ — постройка/снос<br>
+    🖱️ ПКМ — панорама<br>
+    🖲️ Колесо — зум<br>
+    👆 1 палец — панорама<br>
+    ✌️ 2 пальца — зум<br>
+    🌲 Лес растёт сам!<br>
+    <span style="opacity:.7">(скроется через 8с)</span>
+  </div>
+
+  <button class="shop-toggle" id="shopToggle" title="Скрыть/показать постройки">
+    <span class="icon">▶</span>
+  </button>
+
+  <div class="shop" id="shop">
+    <h3>🏗️ Постройки</h3>
+    <div id="shopList"></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <div class="bar">
+    <button class="btn primary" id="findBtn">⚔️ Бой</button>
+    <button class="btn" id="demolishBtn">🗑️ Снести</button>
+    <button class="btn" id="zi">➕</button>
+    <button class="btn" id="zo">➖</button>
+    <button class="btn" id="zr">🎯</button>
+    <button class="btn danger" id="resetBtn">🔄</button>
+  </div>
+
+  <div class="zoom-ind" id="zoomInd">🔍 70%</div>
+  <div class="log" id="log"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-c">
+      <h3 id="mtitle">Битва!</h3>
+      <div id="mcontent"></div>
+      <button class="mbtn" id="mclose">Закрыть</button>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // ============ КОНСТАНТЫ ============
+      var RANKS = [{
+          name: 'Новобранец',
+          maxWins: 3,
+          str: ['house', 'farm', 'lumberMill', 'barracks']
+        },
+        {
+          name: 'Воин',
+          maxWins: 6,
+          str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith',
+            'wall'
+          ]
+        },
+        {
+          name: 'Рыцарь',
+          maxWins: 10,
+          str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith',
+            'wall', 'market'
+          ]
+        },
+        {
+          name: 'Барон',
+          maxWins: 15,
+          str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith',
+            'wall', 'market', 'tower'
+          ]
+        },
+        {
+          name: 'Герцог',
+          maxWins: 22,
+          str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith',
+            'wall', 'market', 'tower', 'castle', 'dragonLair'
+          ]
+        },
+        {
+          name: 'Король',
+          maxWins: Infinity,
+          str: ['house', 'farm', 'lumberMill', 'barracks', 'blacksmith',
+            'wall', 'market', 'tower', 'castle', 'dragonLair'
+          ]
+        }
+      ];
+
+      var S = {
+        house: {
+          name: 'Дом',
+          icon: '🏠',
+          cost: {
+            g: 20,
+            w: 10
+          },
+          eff: '+2 жителя, +5 армии',
+          type: 'army',
+          per: 5,
+          size: 1,
+          pop: 2
+        },
+        farm: {
+          name: 'Ферма',
+          icon: '🌾',
+          cost: {
+            g: 15,
+            w: 5
+          },
+          eff: '+3 золота/с',
+          type: 'goldRate',
+          per: 3,
+          size: 1,
+          pop: 1
+        },
+        lumberMill: {
+          name: 'Лесопилка',
+          icon: '🪓',
+          cost: {
+            g: 30,
+            w: 15
+          },
+          eff: '+2 дерева/с, лесоруб',
+          type: 'woodRate',
+          per: 2,
+          size: 1,
+          pop: 1,
+          worker: 'lumberjack'
+        },
+        barracks: {
+          name: 'Казармы',
+          icon: '⚔️',
+          cost: {
+            g: 40,
+            w: 25
+          },
+          eff: '+10 армии',
+          type: 'army',
+          per: 10,
+          size: 1,
+          pop: 1
+        },
+        blacksmith: {
+          name: 'Кузница',
+          icon: '🔨',
+          cost: {
+            g: 60,
+            w: 40
+          },
+          eff: '+15 армии',
+          type: 'army',
+          per: 15,
+          size: 1,
+          pop: 1
+        },
+        wall: {
+          name: 'Стена',
+          icon: '🧱',
+          cost: {
+            g: 50,
+            w: 60
+          },
+          eff: '+5 защиты',
+          type: 'defense',
+          per: 5,
+          size: 1,
+          pop: 0
+        },
+        market: {
+          name: 'Рынок',
+          icon: '🏪',
+          cost: {
+            g: 70,
+            w: 50
+          },
+          eff: '+5 золота/с',
+          type: 'goldRate',
+          per: 5,
+          size: 1,
+          pop: 2
+        },
+        tower: {
+          name: 'Башня',
+          icon: '🗼',
+          cost: {
+            g: 90,
+            w: 70
+          },
+          eff: '+20 армии',
+          type: 'army',
+          per: 20,
+          size: 1,
+          pop: 1
+        },
+        castle: {
+          name: 'Замок',
+          icon: '🏰',
+          cost: {
+            g: 150,
+            w: 120
+          },
+          eff: '+30 армии,+10з/с',
+          type: 'mixed',
+          per: 10,
+          size: 2,
+          pop: 5
+        },
+        dragonLair: {
+          name: 'Логово',
+          icon: '🐉',
+          cost: {
+            g: 300,
+            w: 200
+          },
+          eff: '+50 армии',
+          type: 'army',
+          per: 50,
+          size: 2,
+          pop: 0
+        }
+      };
+
+      var GS = 60,
+        COLS = 40,
+        ROWS = 28;
+      var cv = document.getElementById('cv'),
+        ctx = cv.getContext('2d');
+      var MAX_CITIZENS = 80;
+      var CHOP_DURATION = 1.0;
+      var WOOD_PER_CHOP = 5;
+      var ARRIVE_DIST = 16;
+
+      // ====== ЛЕСНОЙ РОСТ ======
+      var TREE_INITIAL = 200; // сколько деревьев на старте
+      var TREE_MIN = 80; // не даём лесу совсем исчезнуть
+      var TREE_MAX = 900; // потолок (защита от лагов)
+      var TREE_GROW_BASE = 0.5; // базовое деревьев/сек
+      var TREE_GROW_PER_SEC =
+      0.006; // прирост скорости роста с каждой секундой игры
+      var TREE_GROW_MAX = 4.5; // максимальная скорость роста (деревьев/сек)
+      var treeGrowTimer = 0;
+      var gameTime = 0; // сколько секунд игра идёт (для скорости роста)
+
+      var state = {
+        gold: 150,
+        wood: 80,
+        army: 10,
+        wins: 0,
+        rankIndex: 0,
+        buildings: [],
+        lastTick: Date.now()
+      };
+
+      var cam = {
+        x: COLS * GS / 2,
+        y: ROWS * GS / 2,
+        zoom: 0.7,
+        minZoom: 0.15,
+        maxZoom: 3.0
+      };
+
+      var placing = null;
+      var demolishMode = false;
+      var mouse = {
+        x: 0,
+        y: 0,
+        inside: false
+      };
+
+      var trees = [];
+      var TREE_TYPES = [{
+          name: 'oak',
+          color1: '#2d5016',
+          color2: '#4a7a2e',
+          trunk: '#5c3a1f'
+        },
+        {
+          name: 'pine',
+          color1: '#1a4010',
+          color2: '#2d6b1e',
+          trunk: '#4a2e15'
+        },
+        {
+          name: 'birch',
+          color1: '#5a8a3a',
+          color2: '#7fb84a',
+          trunk: '#d4c4a8'
+        }
+      ];
+
+      var citizens = [];
+      var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a',
+        '#b8865f'
+      ];
+      var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad',
+        '#d35400', '#f39c12', '#16a085', '#e74c3c'
+      ];
+
+      // ============ ГЕНЕРАЦИЯ / РОСТ ДЕРЕВЬЕВ ============
+      function makeTreeAt(gx, gy) {
+        // Проверим: тайл занят зданием или другим деревом
+        if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
+        if (anyOcc(gx, gy, 1)) return false;
+        for (var i = 0; i < trees.length; i++) {
+          if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y /
+              GS) === gy) return false;
+        }
+        var type = Math.floor(Math.random() * TREE_TYPES.length);
+        trees.push({
+          gx: gx,
+          gy: gy,
+          x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
+          y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
+          size: 0.55 + Math.random() * 0.5, // молодые чуть меньше
+          phase: Math.random() * Math.PI * 2,
+          sway: 0.5 + Math.random() * 0.5,
+          type: type,
+          hp: 3,
+          chopPhase: 0,
+          choppedBy: null,
+          age: 0, // для визуального роста
+          growDur: 2 + Math.random() * 2 // секунд до полного размера
+        });
+        return true;
+      }
+
+      function generateTrees() {
+        trees = [];
+        var target = TREE_INITIAL,
+          attempts = 0;
+        while (trees.length < target && attempts < 8000) {
+          attempts++;
+          var gx = Math.floor(Math.random() * COLS);
+          var gy = Math.floor(Math.random() * ROWS);
+          var dCenter = Math.sqrt((gx - COLS / 2) * (gx - COLS / 2) + (gy -
+            ROWS / 2) * (gy - ROWS / 2));
+          if (dCenter < 3) continue;
+          // не накладываем на постройки
+          if (anyOcc(gx, gy, 1)) continue;
+          var blocked = false;
+          for (var i = 0; i < trees.length; i++) {
+            if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y /
+                GS) === gy) {
+              blocked = true;
+              break;
+            }
+          }
+          if (blocked) continue;
+          var type = Math.floor(Math.random() * TREE_TYPES.length);
+          trees.push({
+            gx: gx,
+            gy: gy,
+            x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
+            y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
+            size: 0.75 + Math.random() * 0.6,
+            phase: Math.random() * Math.PI * 2,
+            sway: 0.5 + Math.random() * 0.5,
+            type: type,
+            hp: 3,
+            chopPhase: 0,
+            choppedBy: null,
+            age: 99,
+            growDur: 0 // уже взрослые
+          });
+        }
+      }
+
+      // Попробовать вырастить одно дерево в случайном свободном месте
+      function growOneTree() {
+        if (trees.length >= TREE_MAX) return false;
+        // 30 попыток
+        for (var attempt = 0; attempt < 30; attempt++) {
+          var gx = Math.floor(Math.random() * COLS);
+          var gy = Math.floor(Math.random() * ROWS);
+          if (makeTreeAt(gx, gy)) return true;
+        }
+        return false;
+      }
+
+      // Текущая скорость роста (деревьев/сек)
+      function currentGrowRate() {
+        var rate = TREE_GROW_BASE + gameTime * TREE_GROW_PER_SEC;
+        return Math.min(rate, TREE_GROW_MAX);
+      }
+
+      function updateForest(dt) {
+        gameTime += dt;
+
+        // Анимация роста размера у молодых деревьев
+        for (var i = 0; i < trees.length; i++) {
+          var t = trees[i];
+          if (t.age < t.growDur) {
+            t.age += dt;
+          }
+        }
+
+        // Регенерация
+        var rate = currentGrowRate();
+        treeGrowTimer += rate * dt;
+        while (treeGrowTimer >= 1) {
+          treeGrowTimer -= 1;
+          growOneTree();
+        }
+
+        // Поддерживаем минимум
+        if (trees.length < TREE_MIN) {
+          // срочно досыпаем
+          var toGrow = Math.min(TREE_MIN - trees.length, 3);
+          for (var k = 0; k < toGrow; k++) growOneTree();
+        }
+      }
+
+      function updateForestHUD() {
+        var elCount = document.getElementById('treeCount');
+        var elMax = document.getElementById('treeMax');
+        var badge = document.getElementById('forestBadge');
+        if (!elCount) return;
+        elCount.textContent = trees.length;
+        elMax.textContent = TREE_MAX;
+        var rate = currentGrowRate();
+        if (rate > TREE_GROW_BASE + 0.2) {
+          badge.classList.add('growing');
+        } else {
+          badge.classList.remove('growing');
+        }
+      }
+
+      // ============ ГЕОМЕТРИЯ ============
+      function w2s(wx, wy) {
+        return {
+          x: (wx - cam.x) * cam.zoom + cv.width / 2,
+          y: (wy - cam.y) * cam.zoom + cv.height / 2
+        };
+      }
+
+      function s2w(sx, sy) {
+        return {
+          x: (sx - cv.width / 2) / cam.zoom + cam.x,
+          y: (sy - cv.height / 2) / cam.zoom + cam.y
+        };
+      }
+
+      function s2g(sx, sy) {
+        var w = s2w(sx, sy);
+        return {
+          gx: Math.floor(w.x / GS),
+          gy: Math.floor(w.y / GS)
+        };
+      }
+
+      function resize() {
+        cv.width = innerWidth;
+        cv.height = innerHeight;
+      }
+      addEventListener('resize', resize);
+      resize();
+
+      // ============ РАНГИ ============
+      function curRank() {
+        return RANKS[Math.min(state.rankIndex, RANKS.length - 1)];
+      }
+
+      function unlocked(t) {
+        return curRank().str.indexOf(t) >= 0;
+      }
+
+      // ============ ЗАНЯТОСТЬ ============
+      function occupied(gx, gy) {
+        for (var i = 0; i < state.buildings.length; i++) {
+          var b = state.buildings[i],
+            s = S[b.type].size;
+          if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s)
+            return true;
+        }
+        return false;
+      }
+
+      function anyOcc(gx, gy, size) {
+        for (var x = gx; x < gx + size; x++)
+          for (var y = gy; y < gy + size; y++)
+            if (occupied(x, y)) return true;
+        return false;
+      }
+
+      function treeAtIndex(gx, gy) {
+        for (var i = 0; i < trees.length; i++) {
+          if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y /
+              GS) === gy) return i;
+        }
+        return -1;
+      }
+
+      function buildingAt(gx, gy) {
+        for (var i = 0; i < state.buildings.length; i++) {
+          var b = state.buildings[i],
+            s = S[b.type].size;
+          if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s)
+            return b;
+        }
+        return null;
+      }
+
+      // ============ СОХРАНЕНИЕ ============
+      function save() {
+        try {
+          localStorage.setItem('kr19', JSON.stringify({
+            gold: state.gold,
+            wood: state.wood,
+            army: state.army,
+            wins: state.wins,
+            rankIndex: state.rankIndex,
+            buildings: state.buildings,
+            gameTime: gameTime,
+            shopCollapsed: document.getElementById('shop').classList
+              .contains('collapsed')
+          }));
+        } catch (e) {}
+      }
+
+      function load() {
+        try {
+          var r = localStorage.getItem('kr19');
+          if (r) {
+            var p = JSON.parse(r);
+            for (var k in p) {
+              if (k === 'shopCollapsed') continue;
+              state[k] = p[k];
+            }
+            if (!Array.isArray(state.buildings)) state.buildings = [];
+            state.lastTick = Date.now();
+            if (typeof p.gameTime === 'number') gameTime = p.gameTime;
+            if (p.shopCollapsed) setShopCollapsed(true, false);
+          }
+        } catch (e) {}
+      }
+
+      // ============ ЛОГИ ============
+      function addLog(msg) {
+        var l = document.getElementById('log');
+        var t = new Date().toLocaleTimeString('ru-RU', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        var d = document.createElement('div');
+        d.textContent = '[' + t + '] ' + msg;
+        l.appendChild(d);
+        while (l.children.length > 30) l.removeChild(l.firstChild);
+        l.scrollTop = l.scrollHeight;
+      }
+
+      // ============ HUD ============
+      function updateHUD() {
+        document.getElementById('gold').textContent = Math.floor(state.gold);
+        document.getElementById('wood').textContent = Math.floor(state.wood);
+        document.getElementById('army').textContent = Math.floor(state.army);
+        document.getElementById('pop').textContent = citizens.length;
+        var lumberjacks = citizens.filter(function(c) {
+          return c.role === 'lumberjack';
+        }).length;
+        document.getElementById('lumberCount').textContent = lumberjacks;
+        document.getElementById('rank').textContent = '🏆 Ранг ' + (state
+          .rankIndex + 1) + ': ' + curRank().name;
+        document.getElementById('zoomInd').textContent = '🔍 ' + Math.round(
+          cam.zoom * 100) + '%';
+        updateForestHUD();
+      }
+
+      // ============ МАГАЗИН: СВОРАЧИВАНИЕ ============
+      var shopCollapsed = false;
+
+      function setShopCollapsed(collapsed, animate) {
+        shopCollapsed = collapsed;
+        var shop = document.getElementById('shop');
+        var toggle = document.getElementById('shopToggle');
+        var icon = toggle.querySelector('.icon');
+        if (collapsed) {
+          shop.classList.add('collapsed');
+          toggle.classList.add('collapsed');
+          icon.textContent = '◀';
+          document.body.classList.remove('shop-open');
+        } else {
+          shop.classList.remove('collapsed');
+          toggle.classList.remove('collapsed');
+          icon.textContent = '▶';
+          document.body.classList.add('shop-open');
+        }
+        if (animate !== false) save();
+      }
+
+      document.getElementById('shopToggle').addEventListener('click',
+        function() {
+          setShopCollapsed(!shopCollapsed, true);
+        });
+
+      // ============ ЖИТЕЛИ ============
+      function spawnCitizen(homeId, gx, gy, role) {
+        role = role || 'wander';
+        if (citizens.length >= MAX_CITIZENS) {
+          if (role === 'lumberjack') {
+            var wi = -1;
+            for (var i = 0; i < citizens.length; i++)
+              if (citizens[i].role === 'wander') {
+                wi = i;
+                break;
+              }
+            if (wi >= 0) citizens.splice(wi, 1);
+            else return null;
+          } else return null;
+        }
+        var c = {
+          x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5,
+          y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5,
+          tx: gx * GS + GS / 2,
+          ty: gy * GS + GS / 2,
+          speed: 90 + Math.random() * 40,
+          skin: CITIZEN_COLORS[(Math.random() * CITIZEN_COLORS.length) | 0],
+          shirt: CITIZEN_SHIRTS[(Math.random() * CITIZEN_SHIRTS.length) |
+            0],
+          phase: Math.random() * Math.PI * 2,
+          homeId: homeId,
+          dir: 1,
+          pauseTimer: 0,
+          role: role,
+          targetTree: null,
+          choppingTimer: 0,
+          carrying: false,
+          stuckTimer: 0,
+          lastX: 0,
+          lastY: 0,
+          retargetTimer: 0
+        };
+        if (c.role === 'lumberjack') {
+          c.lastX = c.x;
+          c.lastY = c.y;
+          findNearestTree(c);
+        } else pickWanderTarget(c);
+        citizens.push(c);
+        return c;
+      }
+
+      function findNearestTree(c) {
+        if (trees.length === 0) {
+          c.targetTree = null;
+          c.tx = c.x;
+          c.ty = c.y;
+          return false;
+        }
+        var best = null,
+          bestD = Infinity;
+        for (var i = 0; i < trees.length; i++) {
+          var t = trees[i];
+          if (t.hp <= 0) continue;
+          var dx = t.x - c.x,
+            dy = t.y - c.y;
+          var d = dx * dx + dy * dy;
+          if (d < bestD) {
+            bestD = d;
+            best = t;
+          }
+        }
+        if (best) {
+          c.targetTree = best;
+          c.tx = best.x;
+          c.ty = best.y;
+          c.choppingTimer = 0;
+          return true;
+        }
+        c.targetTree = null;
+        return false;
+      }
+
+      function pickWanderTarget(c) {
+        c.tx = GS * 1.5 + Math.random() * (COLS * GS - GS * 3);
+        c.ty = GS * 1.5 + Math.random() * (ROWS * GS - GS * 3);
+        c.targetTree = null;
+        c.pauseTimer = 0.4 + Math.random() * 1.4;
+        c.lastX = c.x;
+        c.lastY = c.y;
+        c.stuckTimer = 0;
+      }
+
+      function updateCitizens(dt) {
+        if (dt > 0.2) dt = 0.2;
+        for (var i = 0; i < citizens.length; i++) {
+          var c = citizens[i];
+
+          if (c.choppingTimer > 0) {
+            c.choppingTimer -= dt;
+            c.phase += dt * 22;
+            if (c.targetTree) c.targetTree.chopPhase += dt * 15;
+            if (c.choppingTimer <= 0) {
+              if (c.targetTree && c.targetTree.hp > 0) {
+                c.targetTree.hp--;
+                state.wood += WOOD_PER_CHOP;
+                c.carrying = true;
+                if (c.targetTree.hp <= 0) {
+                  var idx = trees.indexOf(c.targetTree);
+                  if (idx >= 0) trees.splice(idx, 1);
+                  c.targetTree = null;
+                  c.carrying = false;
+                }
+              }
+              c.choppingTimer = 0;
+              if (c.role === 'lumberjack') {
+                if (!findNearestTree(c)) {
+                  pickWanderTarget(c);
+                  c.pauseTimer = 2 + Math.random() * 3;
+                }
+              }
+            }
+            continue;
+          }
+
+          if (c.pauseTimer > 0) {
+            c.pauseTimer -= dt;
+            c.phase += dt * 1.5;
+            if (c.pauseTimer < 0) c.pauseTimer = 0;
+            continue;
+          }
+
+          if (c.role === 'lumberjack') {
+            if (!c.targetTree || c.targetTree.hp <= 0) {
+              c.retargetTimer += dt;
+              if (c.retargetTimer >= 0.4) {
+                c.retargetTimer = 0;
+                if (!findNearestTree(c)) {
+                  pickWanderTarget(c);
+                  c.pauseTimer = 2 + Math.random() * 3;
+                }
+              }
+            } else {
+              c.retargetTimer = 0;
+              c.tx = c.targetTree.x;
+              c.ty = c.targetTree.y;
+            }
+          }
+
+          var dx = c.tx - c.x,
+            dy = c.ty - c.y;
+          var d = Math.sqrt(dx * dx + dy * dy);
+
+          if (d < ARRIVE_DIST) {
+            if (c.role === 'lumberjack' && c.targetTree && c.targetTree.hp >
+              0) {
+              c.choppingTimer = CHOP_DURATION;
+              c.targetTree.choppedBy = c;
+            } else pickWanderTarget(c);
+            continue;
+          }
+
+          var step = Math.min(c.speed * dt, d);
+          c.x += (dx / d) * step;
+          c.y += (dy / d) * step;
+          if (dx !== 0) c.dir = dx >= 0 ? 1 : -1;
+          c.phase += dt * 9;
+          if (c.carrying) c.carrying = false;
+
+          c.stuckTimer += dt;
+          if (c.stuckTimer > 1.5) {
+            var moved = Math.abs(c.x - c.lastX) + Math.abs(c.y - c.lastY);
+            if (moved < 12) {
+              if (c.role === 'lumberjack') {
+                if (!findNearestTree(c)) pickWanderTarget(c);
+              } else pickWanderTarget(c);
+            }
+            c.lastX = c.x;
+            c.lastY = c.y;
+            c.stuckTimer = 0;
+          }
+        }
+      }
+
+      // ============ РИСОВАНИЕ ============
+      function drawTree(t) {
+        var p = w2s(t.x, t.y),
+          z = cam.zoom;
+        if (p.x < -80 || p.x > cv.width + 80 || p.y < -120 || p.y > cv
+          .height + 80) return;
+
+        // визуальный рост: от 20% до 100%
+        var grown = t.growDur > 0 ? Math.min(1, t.age / t.growDur) : 1;
+        var growScale = 0.3 + 0.7 * grown;
+
+        var sway = Math.sin(t.phase + performance.now() * 0.001 * t.sway) *
+          0.03;
+        var sz = t.size * GS * z * 0.55 * growScale;
+        var def = TREE_TYPES[t.type];
+
+        var shake = 0;
+        if (t.chopPhase > 0) {
+          t.chopPhase -= 0.5;
+          shake = Math.sin(t.chopPhase * 30) * 2 * z;
+        }
+
+        ctx.save();
+        // тень/ствол в мировом масштабе, но масштабированные на grown
+        ctx.globalAlpha = 0.5 + 0.5 * grown;
+        ctx.translate(p.x + shake, p.y);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)';
+        ctx.beginPath();
+        ctx.ellipse(0, sz * 0.05, sz * 0.35, sz * 0.12, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = def.trunk;
+        ctx.beginPath();
+        ctx.moveTo(-sz * 0.08, 0);
+        ctx.lineTo(sz * 0.08, 0);
+        ctx.lineTo(sz * 0.05, -sz * 0.5);
+        ctx.lineTo(-sz * 0.05, -sz * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = Math.max(0.5, z);
+        ctx.stroke();
+        ctx.translate(0, -sz * 0.55);
+        ctx.rotate(sway);
+        ctx.fillStyle = def.color1;
+        ctx.beginPath();
+        ctx.arc(-sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2);
+        ctx.arc(sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2);
+        ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = def.color2;
+        ctx.beginPath();
+        ctx.arc(-sz * 0.1, -sz * 0.15, sz * 0.22, 0, Math.PI * 2);
+        ctx.arc(sz * 0.15, -sz * 0.1, sz * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+        ctx.lineWidth = Math.max(0.5, z);
+        ctx.beginPath();
+        ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawCitizen(c) {
+        var p = w2s(c.x, c.y),
+          z = cam.zoom;
+        if (p.x < -60 || p.x > cv.width + 60 || p.y < -60 || p.y > cv.height +
+          60) return;
+        var bob = Math.sin(c.phase) * 1.5 * z;
+        var legSwing = Math.sin(c.phase) * 3 * z;
+        var bodyH = 14 * z,
+          headR = 4 * z;
+        var baseY = p.y + bob;
+        var chopping = c.choppingTimer > 0;
+        var axeSwing = chopping ? Math.sin(c.phase * 3) * 0.9 : 0;
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y + bodyH * 0.55, 6 * z, 2.5 * z, 0, 0, Math.PI *
+          2);
+        ctx.fill();
+        ctx.strokeStyle = '#3a2a1a';
+        ctx.lineWidth = Math.max(1, 2 * z);
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x - 2 * z, baseY + bodyH * 0.15);
+        ctx.lineTo(p.x - 2 * z + legSwing * 0.3, baseY + bodyH * 0.6);
+        ctx.moveTo(p.x + 2 * z, baseY + bodyH * 0.15);
+        ctx.lineTo(p.x + 2 * z - legSwing * 0.3, baseY + bodyH * 0.6);
+        ctx.stroke();
+        ctx.fillStyle = c.shirt;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(p.x - 4 * z, baseY - 2 * z, 8 * z,
+          bodyH * 0.6, 2 * z);
+        else ctx.rect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1 * z;
+        ctx.stroke();
+        ctx.strokeStyle = c.skin;
+        ctx.lineWidth = Math.max(1, 1.8 * z);
+        var armSwing = Math.sin(c.phase + Math.PI) * 2 * z;
+        ctx.beginPath();
+        ctx.moveTo(p.x - 4 * z, baseY);
+        ctx.lineTo(p.x - 6 * z, baseY + bodyH * 0.4 + armSwing);
+        ctx.moveTo(p.x + 4 * z, baseY);
+        if (chopping) ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.2 - axeSwing *
+          10 * z);
+        else ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.4 - armSwing);
+        ctx.stroke();
+        if (c.role === 'lumberjack') {
+          var ax = p.x + 6 * z,
+            ay = baseY + bodyH * 0.2 - (chopping ? axeSwing * 10 * z :
+              armSwing);
+          ctx.strokeStyle = '#8b6914';
+          ctx.lineWidth = Math.max(1, 1.5 * z);
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(ax + 3 * z, ay - 4 * z);
+          ctx.stroke();
+          ctx.fillStyle = '#bdc3c7';
+          ctx.beginPath();
+          ctx.moveTo(ax + 3 * z, ay - 4 * z);
+          ctx.lineTo(ax + 6 * z, ay - 5 * z);
+          ctx.lineTo(ax + 5 * z, ay - 2 * z);
+          ctx.closePath();
+          ctx.fill();
+          ctx.font = 'bold ' + Math.max(8, 4 * z) + 'px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 2;
+          ctx.strokeText('🪓', p.x, baseY - 9 * z);
+          ctx.fillStyle = '#ffd966';
+          ctx.fillText('🪓', p.x, baseY - 9 * z);
+          if (chopping && c.targetTree) {
+            var w = 20 * z,
+              h = 3 * z;
+            var prog = 1 - (c.choppingTimer / CHOP_DURATION);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(p.x - w / 2, baseY - 16 * z, w, h);
+            ctx.fillStyle = '#8bc34a';
+            ctx.fillRect(p.x - w / 2, baseY - 16 * z, w * prog, h);
+          }
+        }
+        ctx.fillStyle = c.skin;
+        ctx.beginPath();
+        ctx.arc(p.x, baseY - 4 * z, headR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1 * z;
+        ctx.stroke();
+        ctx.fillStyle = '#3a2a1a';
+        ctx.beginPath();
+        ctx.arc(p.x, baseY - 5.5 * z, headR * 0.95, Math.PI, 0);
+        ctx.fill();
+        var eyeOff = c.dir * 1.2 * z;
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(p.x - 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI *
+          2);
+        ctx.arc(p.x + 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI *
+          2);
+        ctx.fill();
+        if (c.carrying && !chopping) {
+          ctx.fillStyle = '#8b6914';
+          ctx.save();
+          ctx.translate(p.x, baseY + bodyH * 0.3);
+          ctx.rotate(0.3);
+          ctx.fillRect(-1 * z, -6 * z, 2 * z, 12 * z);
+          ctx.strokeStyle = '#5c3a1f';
+          ctx.lineWidth = 0.5 * z;
+          ctx.strokeRect(-1 * z, -6 * z, 2 * z, 12 * z);
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+
+      function drawGround() {
+        var g = ctx.createLinearGradient(0, 0, 0, cv.height);
+        g.addColorStop(0, '#0d1a10');
+        g.addColorStop(1, '#05100a');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        var tl = s2w(0, 0),
+          br = s2w(cv.width, cv.height);
+        var minX = Math.max(0, Math.floor(tl.x / GS) - 1);
+        var maxX = Math.min(COLS, Math.ceil(br.x / GS) + 1);
+        var minY = Math.max(0, Math.floor(tl.y / GS) - 1);
+        var maxY = Math.min(ROWS, Math.ceil(br.y / GS) + 1);
+        for (var gy = minY; gy < maxY; gy++) {
+          for (var gx = minX; gx < maxX; gx++) {
+            var p = w2s(gx * GS, gy * GS),
+              cs = GS * cam.zoom;
+            var shade = ['#4a7a42', '#45713e', '#4f8047', '#427039',
+              '#527d45'][(gx * 7 + gy * 13) % 5];
+            ctx.fillStyle = shade;
+            ctx.fillRect(p.x, p.y, cs + 1, cs + 1);
+          }
+        }
+        var ttl = w2s(0, 0),
+          tbr = w2s(COLS * GS, ROWS * GS);
+        ctx.save();
+        ctx.fillStyle = 'rgba(10,20,10,0.55)';
+        ctx.fillRect(0, 0, cv.width, Math.max(0, ttl.y));
+        if (tbr.y < cv.height) ctx.fillRect(0, tbr.y, cv.width, cv.height -
+          tbr.y);
+        if (ttl.x > 0) ctx.fillRect(0, Math.max(0, ttl.y), Math.max(0, ttl.x),
+          Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
+        if (tbr.x < cv.width) ctx.fillRect(tbr.x, Math.max(0, ttl.y), cv
+          .width - tbr.x, Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
+        ctx.restore();
+        ctx.strokeStyle = '#d4af37';
+        ctx.lineWidth = Math.max(2, 3 * cam.zoom);
+        ctx.setLineDash([12 * cam.zoom, 8 * cam.zoom]);
+        ctx.strokeRect(ttl.x, ttl.y, tbr.x - ttl.x, tbr.y - ttl.y);
+        ctx.setLineDash([]);
+      }
+
+      function bcolor(t) {
+        var c = {
+          house: {
+            l: '#d4a574',
+            d: '#8b6b3f',
+            r: '#a0522d'
+          },
+          farm: {
+            l: '#9acd32',
+            d: '#6b8e23',
+            r: '#8b4513'
+          },
+          lumberMill: {
+            l: '#8b6b3f',
+            d: '#5c4a2e',
+            r: '#654321'
+          },
+          barracks: {
+            l: '#a0522d',
+            d: '#654321',
+            r: '#8b0000'
+          },
+          blacksmith: {
+            l: '#696969',
+            d: '#404040',
+            r: '#2f2f2f'
+          },
+          wall: {
+            l: '#a9a9a9',
+            d: '#696969',
+            r: '#808080'
+          },
+          market: {
+            l: '#daa520',
+            d: '#b8860b',
+            r: '#8b6914'
+          },
+          tower: {
+            l: '#b0b0b0',
+            d: '#707070',
+            r: '#4a4a4a'
+          },
+          castle: {
+            l: '#c0c0c0',
+            d: '#808080',
+            r: '#4a4a6a'
+          },
+          dragonLair: {
+            l: '#8b0000',
+            d: '#4a0000',
+            r: '#ff4500'
+          }
+        };
+        return c[t] || {
+          l: '#999',
+          d: '#666',
+          r: '#444'
+        };
+      }
+
+      function drawBuilding(b) {
+        var def = S[b.type];
+        if (!def) return;
+        var size = def.size;
+        var p = w2s(b.gx * GS, b.gy * GS);
+        var ts = GS * size * cam.zoom;
+        ctx.save();
+        ctx.translate(p.x + ts / 2, p.y + ts / 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.beginPath();
+        ctx.ellipse(0, ts * 0.42, ts * 0.42, ts * 0.14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        var w = ts * 0.78,
+          h = ts * 0.58,
+          dp = ts * 0.18;
+        var col = bcolor(b.type);
+        var gr = ctx.createLinearGradient(0, -h / 2, 0, h / 2);
+        gr.addColorStop(0, col.l);
+        gr.addColorStop(1, col.d);
+        ctx.fillStyle = gr;
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, -h / 2 + dp);
+        ctx.lineTo(w / 2, -h / 2 + dp);
+        ctx.lineTo(w / 2, h / 2 + dp);
+        ctx.lineTo(-w / 2, h / 2 + dp);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+        ctx.lineWidth = Math.max(1, cam.zoom * 1.5);
+        ctx.stroke();
+        ctx.fillStyle = col.r;
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, -h / 2 + dp);
+        ctx.lineTo(0, -h / 2 - dp * 0.4);
+        ctx.lineTo(w / 2, -h / 2 + dp);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = col.d;
+        ctx.beginPath();
+        ctx.moveTo(w / 2, -h / 2 + dp);
+        ctx.lineTo(w / 2, h / 2 + dp);
+        ctx.lineTo(w / 2 - dp, h / 2 + dp - dp * 0.5);
+        ctx.lineTo(w / 2 - dp, -h / 2 + dp - dp * 0.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.font = ts * 0.38 + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(def.icon, 0, dp * 0.4);
+        if (b.level > 0) {
+          var st = '';
+          for (var i = 0; i < Math.min(b.level, 5); i++) st += '★';
+          ctx.font = 'bold ' + Math.max(9, ts * 0.11) + 'px sans-serif';
+          ctx.fillStyle = '#ffd966';
+          ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+          ctx.lineWidth = 2;
+          ctx.strokeText(st, 0, h / 2 + dp * 0.85);
+          ctx.fillText(st, 0, h / 2 + dp * 0.85);
+        }
+        ctx.restore();
+      }
+
+      function drawHover() {
+        if (!mouse.inside) return;
+        var g = s2g(mouse.x, mouse.y);
+        if (g.gx < 0 || g.gx >= COLS || g.gy < 0 || g.gy >= ROWS) return;
+        var p = w2s(g.gx * GS, g.gy * GS);
+        ctx.save();
+        if (demolishMode) {
+          var b = buildingAt(g.gx, g.gy);
+          if (b) {
+            var sz = S[b.type].size;
+            var bp = w2s(b.gx * GS, b.gy * GS);
+            ctx.fillStyle = 'rgba(255,50,50,0.4)';
+            ctx.fillRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
+            ctx.strokeStyle = '#ff3333';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam
+            .zoom);
+          }
+        } else if (!placing) {
+          ctx.strokeStyle = 'rgba(255,217,102,0.85)';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(p.x, p.y, GS * cam.zoom, GS * cam.zoom);
+        }
+        ctx.restore();
+      }
+
+      function drawPreview() {
+        if (!placing || !mouse.inside) return;
+        var def = S[placing];
+        var g = s2g(mouse.x, mouse.y);
+        var size = def.size;
+        var can = g.gx >= 0 && g.gx + size <= COLS && g.gy >= 0 && g.gy +
+          size <= ROWS &&
+          !anyOcc(g.gx, g.gy, size) && treeAtIndex(g.gx, g.gy) < 0;
+        var p = w2s(g.gx * GS, g.gy * GS),
+          cs = GS * cam.zoom;
+        ctx.save();
+        ctx.fillStyle = can ? 'rgba(80,255,80,0.35)' : 'rgba(255,60,60,0.4)';
+        ctx.fillRect(p.x, p.y, cs * size, cs * size);
+        ctx.strokeStyle = can ? '#00ff66' : '#ff3333';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(p.x, p.y, cs * size, cs * size);
+        ctx.font = (cs * size * 0.5) + 'px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = 0.8;
+        ctx.fillText(def.icon, p.x + cs * size / 2, p.y + cs * size / 2);
+        ctx.restore();
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        drawGround();
+        var items = [];
+        for (var i = 0; i < trees.length; i++) items.push({
+          y: trees[i].y,
+          kind: 'tree',
+          data: trees[i]
+        });
+        for (var i = 0; i < state.buildings.length; i++) {
+          var b = state.buildings[i];
+          items.push({
+            y: b.gy * GS + S[b.type].size * GS * 0.5,
+            kind: 'b',
+            data: b
+          });
+        }
+        for (var i = 0; i < citizens.length; i++) items.push({
+          y: citizens[i].y,
+          kind: 'c',
+          data: citizens[i]
+        });
+        items.sort(function(a, b) {
+          return a.y - b.y;
+        });
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          if (it.kind === 'tree') drawTree(it.data);
+          else if (it.kind === 'b') drawBuilding(it.data);
+          else if (it.kind === 'c') drawCitizen(it.data);
+        }
+        drawHover();
+        drawPreview();
+      }
+
+      // ============ ИГРОВОЙ ЦИКЛ ============
+      var lastR = performance.now();
+
+      function loop(ts) {
+        var dt = (ts - lastR) / 1000;
+        if (!dt || dt > 0.5) dt = 0.016;
+        lastR = ts;
+        updateForest(dt);
+        updateCitizens(dt);
+        render();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+
+      function tick() {
+        var now = Date.now();
+        var dt = Math.min((now - state.lastTick) / 1000, 2);
+        state.lastTick = now;
+        var gr = 0,
+          wr = 0;
+        for (var i = 0; i < state.buildings.length; i++) {
+          var b = state.buildings[i],
+            def = S[b.type];
+          if (!def) continue;
+          var lv = b.level || 0;
+          if (def.type === 'goldRate') gr += def.per * lv;
+          if (def.type === 'woodRate') wr += def.per * lv;
+          if (def.type === 'mixed') gr += def.per * lv;
+        }
+        state.gold += gr * dt;
+        state.wood += wr * dt;
+        updateHUD();
+        save();
+      }
+      setInterval(tick, 1000);
+
+      // ============ МАГАЗИН ============
+      function renderShop() {
+        var list = document.getElementById('shopList');
+        list.innerHTML = '';
+        Object.keys(S).forEach(function(type) {
+          var def = S[type];
+          var unl = unlocked(type);
+          var item = document.createElement('div');
+          item.className = 'shop-item' + (unl ? '' : ' locked') + (
+            placing === type ? ' selected' : '');
+          item.innerHTML =
+            '<div class="shop-top"><div class="shop-icon">' + def.icon +
+            '</div>' +
+            '<div><div class="shop-name">' + def.name + '</div>' +
+            '<div class="shop-cost">' + def.cost.g + '💰 ' + def.cost.w +
+            '🪵</div></div></div>' +
+            '<div class="shop-effect">' + def.eff + '</div>';
+          if (unl) {
+            item.onclick = function() {
+              if (state.gold < def.cost.g || state.wood < def.cost.w) {
+                addLog('❌ Не хватает ресурсов');
+                return;
+              }
+              placing = (placing === type) ? null : type;
+              demolishMode = false;
+              updateBanner();
+              renderShop();
+            };
+          }
+          list.appendChild(item);
+        });
+      }
+
+      function updateBanner() {
+        var b = document.getElementById('banner');
+        if (placing) {
+          var def = S[placing];
+          b.className = 'banner';
+          b.style.display = 'block';
+          b.innerHTML = 'Режим: ' + def.icon + ' ' + def.name +
+            '<small>Кликните по карте • ПКМ / Esc — отмена</small>';
+        } else if (demolishMode) {
+          b.className = 'banner demolish';
+          b.style.display = 'block';
+          b.innerHTML =
+            '🗑️ Режим сноса<small>Кликните по зданию • ПКМ / Esc — отмена</small>';
+        } else {
+          b.style.display = 'none';
+          b.className = 'banner';
+        }
+      }
+
+      // ============ РАЗМЕЩЕНИЕ / СНОС ============
+      function tryPlace(gx, gy) {
+        if (!placing) return;
+        var def = S[placing],
+          size = def.size;
+        if (gx < 0 || gx + size > COLS || gy < 0 || gy + size > ROWS) {
+          addLog('❌ За пределами карты');
+          return;
+        }
+        if (anyOcc(gx, gy, size)) {
+          addLog('❌ Место занято');
+          return;
+        }
+        if (treeAtIndex(gx, gy) >= 0) {
+          addLog('❌ Здесь дерево');
+          return;
+        }
+        if (state.gold < def.cost.g || state.wood < def.cost.w) {
+          addLog('❌ Не хватает ресурсов');
+          return;
+        }
+
+        state.gold -= def.cost.g;
+        state.wood -= def.cost.w;
+        var bId = 'b' + Date.now() + Math.random().toString(36).slice(2, 6);
+        state.buildings.push({
+          id: bId,
+          type: placing,
+          gx: gx,
+          gy: gy,
+          level: 1
+        });
+
+        if (def.type === 'army') state.army += def.per;
+        if (def.type === 'mixed') state.army += def.per * 3;
+        if (def.pop) {
+          for (var i = 0; i < def.pop; i++) {
+            var role = def.worker || 'wander';
+            spawnCitizen(bId, gx + size / 2, gy + size / 2, role);
+          }
+        }
+        addLog('✅ ' + def.name + ' построен');
+        save();
+        updateHUD();
+        placing = null;
+        updateBanner();
+        renderShop();
+      }
+
+      function demolishBuilding(gx, gy) {
+        var b = buildingAt(gx, gy);
+        if (!b) {
+          addLog('❌ Здесь нет здания');
+          return;
+        }
+        var def = S[b.type];
+        var refundG = Math.floor(def.cost.g * 0.5);
+        var refundW = Math.floor(def.cost.w * 0.5);
+        state.gold += refundG;
+        state.wood += refundW;
+        citizens = citizens.filter(function(c) {
+          return c.homeId !== b.id;
+        });
+        if (def.type === 'army') state.army = Math.max(0, state.army - def
+          .per);
+        if (def.type === 'mixed') state.army = Math.max(0, state.army - def
+          .per * 3);
+        var idx = state.buildings.indexOf(b);
+        if (idx >= 0) state.buildings.splice(idx, 1);
+        addLog('🗑️ ' + def.name + ' снесён +' + refundG + '💰');
+        save();
+        updateHUD();
+        demolishMode = false;
+        updateBanner();
+        renderShop();
+      }
+
+      // ============ ЗУМ ============
+      function zoomAt(sx, sy, factor) {
+        var old = cam.zoom;
+        var nz = Math.max(cam.minZoom, Math.min(cam.maxZoom, old * factor));
+        if (nz === old) return;
+        var before = s2w(sx, sy);
+        cam.zoom = nz;
+        var after = s2w(sx, sy);
+        cam.x += before.x - after.x;
+        cam.y += before.y - after.y;
+        updateHUD();
+      }
+
+      // ============ МЫШЬ ============
+      var mousePanning = false,
+        mousePanStartX = 0,
+        mousePanStartY = 0,
+        mouseCamStartX = 0,
+        mouseCamStartY = 0,
+        mouseMoved = false;
+
+      cv.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.15 : 1 / 1.15);
+      }, {
+        passive: false
+      });
+
+      cv.addEventListener('mousemove', function(e) {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+        mouse.inside = true;
+        if (mousePanning) {
+          var dx = e.clientX - mousePanStartX,
+            dy = e.clientY - mousePanStartY;
+          if (Math.abs(dx) + Math.abs(dy) > 3) mouseMoved = true;
+          cam.x = mouseCamStartX - dx / cam.zoom;
+          cam.y = mouseCamStartY - dy / cam.zoom;
+        }
+      });
+      cv.addEventListener('mouseleave', function() {
+        mouse.inside = false;
+      });
+
+      cv.addEventListener('mousedown', function(e) {
+        if (e.button === 2) {
+          e.preventDefault();
+          mousePanning = true;
+          mousePanStartX = e.clientX;
+          mousePanStartY = e.clientY;
+          mouseCamStartX = cam.x;
+          mouseCamStartY = cam.y;
+          mouseMoved = false;
+        }
+      });
+      cv.addEventListener('mouseup', function(e) {
+        if (e.button === 2) {
+          mousePanning = false;
+          if (!mouseMoved) {
+            if (placing) {
+              placing = null;
+              updateBanner();
+              renderShop();
+              addLog('🚫 Отменено');
+            }
+            if (demolishMode) {
+              demolishMode = false;
+              updateBanner();
+              addLog('🚫 Отменено');
+            }
+          }
+        }
+      });
+      cv.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+      });
+
+      // ============ ТАЧ ============
+      var touches = {};
+      var touchMode = null;
+      var panStart = {
+        x: 0,
+        y: 0,
+        camX: 0,
+        camY: 0
+      };
+      var pinchStart = {
+        dist: 0,
+        camX: 0,
+        camY: 0,
+        zoom: 0,
+        midWorldX: 0,
+        midWorldY: 0
+      };
+      var touchHasMoved = false;
+      var touchStartTime = 0;
+      var touchStartPos = {
+        x: 0,
+        y: 0
+      };
+      var TAP_MAX_TIME = 300;
+      var TAP_MAX_DIST = 20;
+
+      function getTouchIds() {
+        return Object.keys(touches).map(Number);
+      }
+
+      function getTwoTouches() {
+        var ids = getTouchIds();
+        if (ids.length < 2) return null;
+        return [touches[ids[0]], touches[ids[1]]];
+      }
+
+      function tdist(a, b) {
+        return Math.hypot(a.x - b.x, a.y - b.y);
+      }
+
+      function tmid(a, b) {
+        return {
+          x: (a.x + b.x) / 2,
+          y: (a.y + b.y) / 2
+        };
+      }
+
+      cv.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var t = e.changedTouches[i];
+          touches[t.identifier] = {
+            x: t.clientX,
+            y: t.clientY
+          };
+        }
+        var ids = getTouchIds();
+
+        if (ids.length === 1) {
+          var t0 = touches[ids[0]];
+          touchMode = 'pan';
+          panStart.x = t0.x;
+          panStart.y = t0.y;
+          panStart.camX = cam.x;
+          panStart.camY = cam.y;
+          touchHasMoved = false;
+          touchStartTime = Date.now();
+          touchStartPos.x = t0.x;
+          touchStartPos.y = t0.y;
+        } else if (ids.length >= 2) {
+          var pair = getTwoTouches();
+          var m = tmid(pair[0], pair[1]);
+          var w = s2w(m.x, m.y);
+          touchMode = 'pinch';
+          pinchStart.dist = tdist(pair[0], pair[1]);
+          pinchStart.camX = cam.x;
+          pinchStart.camY = cam.y;
+          pinchStart.zoom = cam.zoom;
+          pinchStart.midWorldX = w.x;
+          pinchStart.midWorldY = w.y;
+          touchHasMoved = true;
+        }
+      }, {
+        passive: false
+      });
+
+      cv.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var t = e.changedTouches[i];
+          if (touches[t.identifier]) touches[t.identifier] = {
+            x: t.clientX,
+            y: t.clientY
+          };
+        }
+        var ids = getTouchIds();
+
+        if (touchMode === 'pan' && ids.length === 1) {
+          var t0 = touches[ids[0]];
+          var dx = t0.x - panStart.x;
+          var dy = t0.y - panStart.y;
+          if (Math.abs(dx) + Math.abs(dy) > 6) touchHasMoved = true;
+          cam.x = panStart.camX - dx / cam.zoom;
+          cam.y = panStart.camY - dy / cam.zoom;
+        } else if (touchMode === 'pinch' && ids.length >= 2) {
+          var pair = getTwoTouches();
+          var newDist = tdist(pair[0], pair[1]);
+          var m = tmid(pair[0], pair[1]);
+          if (pinchStart.dist > 0 && newDist > 0) {
+            var factor = newDist / pinchStart.dist;
+            var nz = Math.max(cam.minZoom, Math.min(cam.maxZoom,
+              pinchStart.zoom * factor));
+            cam.zoom = nz;
+            cam.x = pinchStart.midWorldX - (m.x - cv.width / 2) / cam
+            .zoom;
+            cam.y = pinchStart.midWorldY - (m.y - cv.height / 2) / cam
+              .zoom;
+            updateHUD();
+          }
+        } else if (ids.length >= 2 && touchMode === 'pan') {
+          var pair2 = getTwoTouches();
+          var m2 = tmid(pair2[0], pair2[1]);
+          var w2 = s2w(m2.x, m2.y);
+          touchMode = 'pinch';
+          pinchStart.dist = tdist(pair2[0], pair2[1]);
+          pinchStart.camX = cam.x;
+          pinchStart.camY = cam.y;
+          pinchStart.zoom = cam.zoom;
+          pinchStart.midWorldX = w2.x;
+          pinchStart.midWorldY = w2.y;
+        }
+      }, {
+        passive: false
+      });
+
+      cv.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          delete touches[e.changedTouches[i].identifier];
+        }
+        var ids = getTouchIds();
+
+        if (ids.length === 0) {
+          if (touchMode === 'pan' && !touchHasMoved && (Date.now() -
+              touchStartTime) < TAP_MAX_TIME) {
+            mouse.x = touchStartPos.x;
+            mouse.y = touchStartPos.y;
+            mouse.inside = true;
+            var g = s2g(mouse.x, mouse.y);
+            if (demolishMode) demolishBuilding(g.gx, g.gy);
+            else if (placing) tryPlace(g.gx, g.gy);
+          }
+          touchMode = null;
+          touchHasMoved = false;
+        } else if (ids.length === 1) {
+          var t0 = touches[ids[0]];
+          touchMode = 'pan';
+          panStart.x = t0.x;
+          panStart.y = t0.y;
+          panStart.camX = cam.x;
+          panStart.camY = cam.y;
+          touchHasMoved = true;
+        }
+      }, {
+        passive: false
+      });
+
+      cv.addEventListener('touchcancel', function(e) {
+        e.preventDefault();
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          delete touches[e.changedTouches[i].identifier];
+        }
+        if (getTouchIds().length === 0) {
+          touchMode = null;
+          touchHasMoved = false;
+        }
+      }, {
+        passive: false
+      });
+
+      // ============ КЛИК И ESC ============
+      cv.addEventListener('click', function(e) {
+        if (mousePanning || mouseMoved) return;
+        var g = s2g(e.clientX, e.clientY);
+        if (demolishMode) demolishBuilding(g.gx, g.gy);
+        else if (placing) tryPlace(g.gx, g.gy);
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+          if (placing) {
+            placing = null;
+            updateBanner();
+            renderShop();
+          }
+          if (demolishMode) {
+            demolishMode = false;
+            updateBanner();
+          }
+        }
+        if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key ===
+          'Р') {
+          setShopCollapsed(!shopCollapsed, true);
+        }
+      });
+
+      // ============ КНОПКИ ============
+      document.getElementById('zi').onclick = function() {
+        zoomAt(cv.width / 2, cv.height / 2, 1.25);
+      };
+      document.getElementById('zo').onclick = function() {
+        zoomAt(cv.width / 2, cv.height / 2, 1 / 1.25);
+      };
+      document.getElementById('zr').onclick = function() {
+        cam.x = COLS * GS / 2;
+        cam.y = ROWS * GS / 2;
+        cam.zoom = 0.7;
+        updateHUD();
+      };
+
+      document.getElementById('demolishBtn').onclick = function() {
+        if (demolishMode) {
+          demolishMode = false;
+          addLog('🚫 Снос отменён');
+        } else {
+          placing = null;
+          demolishMode = true;
+          addLog('🗑️ Режим сноса');
+        }
+        updateBanner();
+        renderShop();
+      };
+
+      // ============ РЕСЕТ ============
+      function resetGame() {
+        if (!confirm('Удалить всё и начать заново?')) return;
+        try {
+          localStorage.removeItem('kr19');
+        } catch (e) {}
+        state = {
+          gold: 150,
+          wood: 80,
+          army: 10,
+          wins: 0,
+          rankIndex: 0,
+          buildings: [],
+          lastTick: Date.now()
+        };
+        citizens = [];
+        placing = null;
+        demolishMode = false;
+        gameTime = 0;
+        treeGrowTimer = 0;
+        generateTrees();
+        cam.x = COLS * GS / 2;
+        cam.y = ROWS * GS / 2;
+        cam.zoom = 0.7;
+        updateBanner();
+        renderShop();
+        updateHUD();
+        addLog('🔄 Игра сброшена. Лес снова растёт!');
+      }
+      document.getElementById('resetBtn').onclick = resetGame;
+
+      // ============ БОЙ ============
+      function findOpponent() {
+        var btn = document.getElementById('findBtn');
+        btn.disabled = true;
+        btn.textContent = '🔎 ...';
+        setTimeout(function() {
+          var pr = state.rankIndex;
+          var base = 20 + pr * 25 + state.wins * 4;
+          var ea = Math.floor(base * (0.7 + Math.random() * 0.9));
+          var names = ['Тёмный лорд', 'Король севера', 'Варвар', 'Гоблин',
+            'Колдун'
+          ];
+          var en = names[Math.floor(Math.random() * names.length)];
+          startBattle(en, ea);
+          btn.disabled = false;
+          btn.textContent = '⚔️ Бой';
+        }, 700);
+      }
+
+      function calcDefense() {
+        var d = 0;
+        for (var i = 0; i < state.buildings.length; i++) {
+          var b = state.buildings[i],
+            def = S[b.type];
+          if (def && def.type === 'defense') d += def.per * (b.level || 0);
+        }
+        return d;
+      }
+
+      function startBattle(enemyName, enemyArmy) {
+        var playerArmy = state.army;
+        var def = calcDefense();
+        var pp = playerArmy * (1 + def * 0.02) + Math.random() * 15;
+        var ep = enemyArmy + Math.random() * 15;
+        var win = pp > ep;
+        var log = '⚔️ Против: ' + enemyName + ' (' + Math.floor(enemyArmy) +
+          ')<br>';
+        log += '🛡️ Ты: ' + Math.floor(playerArmy) + ' (+защ ' + def +
+        ')<br>';
+        log += '💥 ' + pp.toFixed(1) + ' vs ' + ep.toFixed(1) + '<br><br>';
+        if (win) {
+          var gr = 30 + Math.floor(enemyArmy * 1.2);
+          var wr = 15 + Math.floor(enemyArmy * 0.8);
+          var loss = Math.floor(playerArmy * 0.15);
+          state.gold += gr;
+          state.wood += wr;
+          state.army = Math.max(5, playerArmy - loss);
+          state.wins++;
+          log += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss +
+            ' армии';
+          addLog('✅ Победа над ' + enemyName);
+        } else {
+          var loss = Math.floor(playerArmy * 0.4);
+          state.army = Math.max(3, playerArmy - loss);
+          state.gold = Math.max(0, state.gold - 20);
+          state.wood = Math.max(0, state.wood - 15);
+          log += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵';
+          addLog('❌ Поражение от ' + enemyName);
+        }
+        checkRank();
+        save();
+        updateHUD();
+        renderShop();
+        document.getElementById('mtitle').textContent = win ? '🏆 Победа!' :
+          '💔 Поражение';
+        document.getElementById('mcontent').innerHTML = '<div class="blog">' +
+          log + '</div>';
+        document.getElementById('modal').style.display = 'flex';
+      }
+
+      function checkRank() {
+        var r = curRank();
+        if (r.maxWins !== Infinity && state.wins >= r.maxWins && state
+          .rankIndex < RANKS.length - 1) {
+          state.rankIndex++;
+          addLog('🎉 Ранг: ' + RANKS[state.rankIndex].name);
+          renderShop();
+        }
+      }
+      document.getElementById('findBtn').onclick = findOpponent;
+      document.getElementById('mclose').onclick = function() {
+        document.getElementById('modal').style.display = 'none';
+      };
+
+      // ============ СТАРТ ============
+      load();
+      generateTrees();
+
+      for (var i = 0; i < state.buildings.length; i++) {
+        var b = state.buildings[i],
+          def = S[b.type];
+        if (def && def.pop) {
+          var existing = citizens.filter(function(c) {
+            return c.homeId === b.id;
+          }).length;
+          for (var j = existing; j < def.pop * (b.level || 1); j++) {
+            spawnCitizen(b.id, b.gx + def.size / 2, b.gy + def.size / 2, def
+              .worker || 'wander');
+          }
+        }
+      }
+
+      renderShop();
+      updateHUD();
+      addLog('🏁 Kingdom Runner 1.9 загружен');
+      addLog('🌲 Лес растёт сам! Наблюдайте счётчик слева сверху');
+      addLog('🪓 Лесорубы рубят — лес восстанавливается');
+
+      setTimeout(function() {
+        var h = document.getElementById('help');
+        if (h) h.classList.add('hidden');
+      }, 8000);
+
+      // Отладка
+      window.KR = {
+        state: function() {
+          return state;
+        },
+        citizens: function() {
+          return citizens;
+        },
+        trees: function() {
+          return trees;
+        },
+        cam: function() {
+          return cam;
+        },
+        gameTime: function() {
+          return gameTime;
+        },
+        growRate: currentGrowRate,
+        growNow: function(n) {
+          for (var i = 0; i < (n || 10); i++) growOneTree();
+          updateForestHUD();
+        },
+        zoom: function(z) {
+          cam.zoom = Math.max(cam.minZoom, Math.min(cam.maxZoom, z));
+          updateHUD();
+        },
+        toggleShop: function() {
+          setShopCollapsed(!shopCollapsed, true);
+        }
+      };
+      console.log(
+        '💡 KR.growNow(20) — вырастить 20 деревьев. KR.growRate() — текущая скорость'
+        );
+
+    })();
+  </script>
+</body>
+
+</html>
