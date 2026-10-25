@@ -7,7 +7,7 @@
   <meta http-equiv="Expires" content="0">
   
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-  <title>Kingdom Runner — Forest Regrowth</title>
+  <title>Kingdom Runner — Shaders Edition</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1e12">
@@ -19,51 +19,54 @@
     
     .hud { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 12px; pointer-events: none; z-index: 10; flex-wrap: wrap }
     .hud>* { pointer-events: auto }
-    .resources { display: flex; gap: 10px; background: rgba(20, 40, 25, .92); padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap }
+    .resources { display: flex; gap: 10px; background: rgba(20, 40, 25, .92); padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
     .res-item { color: #f5e6b0; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: .85rem }
-    .res-item span { background: #0e2b18; padding: 3px 12px; border-radius: 20px; min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7 }
-    .rank-badge { background: rgba(20, 40, 25, .92); padding: 10px 22px; border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem }
+    .res-item span { background: #0e2b18; padding: 3px 12px; border-radius: 20px; min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+    .rank-badge { background: rgba(20, 40, 25, .92); padding: 10px 22px; border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
     
-    .shop { position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px; background: rgba(15, 32, 20, .94); border: 2px solid #d4af37; border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10; transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center; }
+    .shop { position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px; background: rgba(15, 32, 20, .94); border: 2px solid #d4af37; border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10; transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center; box-shadow: 0 10px 30px rgba(0,0,0,0.7); backdrop-filter: blur(10px); }
     .shop.collapsed { transform: translateX(calc(100% + 20px)); opacity: 0; pointer-events: none; }
-    .shop h3 { color: #ffd966; font-size: 1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #8b6914; padding-bottom: 8px }
-    .shop-item { background: #1a3320; border-radius: 14px; padding: 8px; margin-bottom: 8px; border: 1px solid #6b8c5c; cursor: pointer; transition: .15s }
-    .shop-item:hover:not(.locked):not(.selected) { background: #24472e; border-color: #ffd966 }
-    .shop-item.selected { background: #2f5a3a; border-color: #ffd966; box-shadow: 0 0 12px rgba(255, 217, 102, .6) }
+    .shop h3 { color: #ffd966; font-size: 1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #8b6914; padding-bottom: 8px; text-shadow: 0 2px 4px #000; }
+    .shop-item { background: linear-gradient(180deg, #2a4a30, #1a3320); border-radius: 14px; padding: 8px; margin-bottom: 8px; border: 1px solid #4a6c40; cursor: pointer; transition: .15s; box-shadow: 0 4px 8px rgba(0,0,0,0.4); }
+    .shop-item:hover:not(.locked):not(.selected) { background: linear-gradient(180deg, #3a5c42, #24472e); border-color: #ffd966; transform: translateY(-2px); }
+    .shop-item.selected { background: linear-gradient(180deg, #3a6c46, #2f5a3a); border-color: #ffd966; box-shadow: 0 0 15px rgba(255, 217, 102, .8); }
     .shop-item.locked { opacity: .4; cursor: not-allowed; filter: grayscale(.7) }
     .shop-top { display: flex; align-items: center; gap: 8px }
-    .shop-icon { font-size: 1.6rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #0e2414; border-radius: 10px; flex-shrink: 0 }
-    .shop-name { color: #ffeaac; font-weight: 600; font-size: .85rem }
-    .shop-cost { color: #b8d9a8; font-size: .72rem; margin-top: 2px }
-    .shop-effect { color: #cfcfb0; font-size: .68rem; margin-top: 3px }
+    .shop-icon { font-size: 1.6rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #0e2414; border-radius: 10px; flex-shrink: 0; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); }
+    .shop-name { color: #ffeaac; font-weight: 600; font-size: .85rem; text-shadow: 0 1px 2px #000; }
+    .shop-cost { color: #b8d9a8; font-size: .72rem; margin-top: 2px; }
+    .shop-effect { color: #cfcfb0; font-size: .68rem; margin-top: 3px; }
     
-    .shop-toggle { position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966; color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4); transition: transform .2s, background .2s; }
+    .shop-toggle { position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966; color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .6); transition: transform .2s, background .2s; }
     .shop-toggle .icon { transition: transform .3s }
     .shop-toggle.collapsed .icon { transform: rotate(180deg) }
     
     .bar { position: fixed; bottom: 12px; left: 12px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap }
-    .btn { background: rgba(20, 40, 25, .92); border: 2px solid #d4af37; color: #ffd966; padding: 10px 16px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: .85rem; transition: .15s }
-    .btn.primary { background: linear-gradient(180deg, #dbb42c, #a67c1e); color: #1e2a0e; border-color: #ffd966; box-shadow: 0 3px 0 #7a5d0e }
-    .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 0 #5a0e05 }
+    .btn { background: rgba(20, 40, 25, .92); border: 2px solid #d4af37; color: #ffd966; padding: 10px 16px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: .85rem; transition: .15s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); backdrop-filter: blur(5px); }
+    .btn:hover { background: #2a4a30; transform: translateY(-1px); }
+    .btn.primary { background: linear-gradient(180deg, #dbb42c, #a67c1e); color: #1e2a0e; border-color: #ffd966; box-shadow: 0 4px 0 #7a5d0e, 0 5px 15px rgba(0,0,0,0.6); text-shadow: 0 1px 0 rgba(255,255,255,0.3); }
+    .btn.primary:active { transform: translateY(4px); box-shadow: 0 0 0 #7a5d0e; }
+    .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 4px 0 #5a0e05, 0 5px 15px rgba(0,0,0,0.6); }
+    .btn.danger:active { transform: translateY(4px); box-shadow: 0 0 0 #5a0e05; }
     
-    .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem }
+    .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem; box-shadow: 0 5px 20px rgba(0,0,0,0.7); backdrop-filter: blur(5px); }
     .banner.demolish { background: rgba(80, 20, 20, .96); border-color: #e74c3c; color: #ffcccc }
     
-    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px }
-    .modal-c { background: #274427; border: 4px solid #d4af37; border-radius: 32px; padding: 26px 22px; max-width: 460px; width: 100%; text-align: center; color: #f9f1d2 }
-    .modal-c h3 { font-size: 1.8rem; color: #ffd966; margin-bottom: 12px }
-    .blog { background: #1a2e1a; border-radius: 16px; padding: 12px; text-align: left; font-family: monospace; max-height: 220px; overflow-y: auto; margin: 12px 0; font-size: .88rem; line-height: 1.5 }
-    .mbtn { background: #dbb42c; border: none; border-radius: 40px; padding: 12px 28px; font-weight: bold; font-size: 1rem; color: #1e2a0e; cursor: pointer; box-shadow: 0 4px 0 #8b6914; margin: 4px }
+    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; backdrop-filter: blur(5px); }
+    .modal-c { background: #274427; border: 4px solid #d4af37; border-radius: 32px; padding: 26px 22px; max-width: 460px; width: 100%; text-align: center; color: #f9f1d2; box-shadow: 0 10px 40px rgba(0,0,0,0.9); }
+    .modal-c h3 { font-size: 1.8rem; color: #ffd966; margin-bottom: 12px; text-shadow: 0 2px 5px #000; }
+    .blog { background: #1a2e1a; border-radius: 16px; padding: 12px; text-align: left; font-family: monospace; max-height: 220px; overflow-y: auto; margin: 12px 0; font-size: .88rem; line-height: 1.5; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
+    .mbtn { background: #dbb42c; border: none; border-radius: 40px; padding: 12px 28px; font-weight: bold; font-size: 1rem; color: #1e2a0e; cursor: pointer; box-shadow: 0 4px 0 #8b6914; margin: 4px; transition: 0.15s; }
+    .mbtn:active { transform: translateY(3px); box-shadow: 0 0 0 #8b6914; }
     
-    .log { position: fixed; bottom: 70px; left: 12px; width: 300px; max-height: 110px; overflow-y: auto; z-index: 9; background: rgba(10, 25, 15, .85); border: 1px solid #6b8c5c; border-radius: 12px; padding: 8px 12px; font-family: monospace; font-size: .72rem; color: #bbd9a8; pointer-events: none }
-    .zoom-ind { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(20, 40, 25, .9); border: 1px solid #d4af37; color: #ffd966; padding: 6px 12px; border-radius: 20px; font-size: .75rem; z-index: 10; font-weight: bold }
-    .help { position: fixed; top: 90px; left: 12px; background: rgba(15, 32, 20, .94); border: 2px solid #6b8c5c; border-radius: 14px; padding: 10px 14px; color: #bbd9a8; font-size: .72rem; z-index: 9; max-width: 230px; line-height: 1.5; pointer-events: none; transition: opacity .4s }
+    .log { position: fixed; bottom: 70px; left: 12px; width: 300px; max-height: 110px; overflow-y: auto; z-index: 9; background: rgba(10, 25, 15, .85); border: 1px solid #6b8c5c; border-radius: 12px; padding: 8px 12px; font-family: monospace; font-size: .72rem; color: #bbd9a8; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .zoom-ind { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(20, 40, 25, .9); border: 1px solid #d4af37; color: #ffd966; padding: 6px 12px; border-radius: 20px; font-size: .75rem; z-index: 10; font-weight: bold; box-shadow: 0 3px 10px rgba(0,0,0,0.5); }
+    .help { position: fixed; top: 90px; left: 12px; background: rgba(15, 32, 20, .94); border: 2px solid #6b8c5c; border-radius: 14px; padding: 10px 14px; color: #bbd9a8; font-size: .72rem; z-index: 9; max-width: 230px; line-height: 1.5; pointer-events: none; transition: opacity .4s; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
     .help.hidden { opacity: 0 }
-    .forest-badge { position: fixed; top: 52px; left: 12px; z-index: 10; background: rgba(15, 32, 20, .92); border: 2px solid #6b8c5c; border-radius: 30px; padding: 6px 14px; color: #bbd9a8; font-size: .72rem; font-weight: bold; pointer-events: none; transition: border-color .3s; }
-    .forest-badge.growing { border-color: #8bc34a; box-shadow: 0 0 10px rgba(139, 195, 74, .4) }
+    .forest-badge { position: fixed; top: 52px; left: 12px; z-index: 10; background: rgba(15, 32, 20, .92); border: 2px solid #6b8c5c; border-radius: 30px; padding: 6px 14px; color: #bbd9a8; font-size: .72rem; font-weight: bold; pointer-events: none; transition: border-color .3s; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .forest-badge.growing { border-color: #8bc34a; box-shadow: 0 0 15px rgba(139, 195, 74, .6) }
     .forest-badge b { color: #8bc34a }
     
-    /* Скрываем интерфейс во время битвы */
     body.in-battle .hud, body.in-battle .shop, body.in-battle .shop-toggle, 
     body.in-battle .bar, body.in-battle .forest-badge, body.in-battle .zoom-ind, 
     body.in-battle .help { display: none !important; }
@@ -175,6 +178,7 @@
       var state = { gold: 150, wood: 80, army: 10, wins: 0, rankIndex: 0, buildings: [], lastTick: Date.now() };
       var cam = { x: COLS * GS / 2, y: ROWS * GS / 2, zoom: 0.7, minZoom: 0.15, maxZoom: 3.0 };
       var placing = null, demolishMode = false, mouse = { x: 0, y: 0, inside: false };
+      
       var trees = [], TREE_TYPES = [
         { name: 'oak', color1: '#2d5016', color2: '#4a7a2e', trunk: '#5c3a1f' },
         { name: 'pine', color1: '#1a4010', color2: '#2d6b1e', trunk: '#4a2e15' },
@@ -185,18 +189,59 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // ============ СИСТЕМА БИТВЫ (ОТДЕЛЬНЫЙ МИР) ============
+      // СИСТЕМА ЧАСТИЦ ДЛЯ "ШЕЙДЕРОВ"
+      var particles = [];
+      function spawnParticles(x, y, count, color, speed, size, life) {
+          for(let i=0; i<count; i++) {
+              particles.push({
+                  x: x, y: y,
+                  vx: (Math.random() - 0.5) * speed,
+                  vy: (Math.random() - 0.5) * speed,
+                  size: Math.random() * size + 1,
+                  color: color,
+                  life: life + Math.random() * life,
+                  maxLife: life
+              });
+          }
+      }
+
+      function updateParticles(dt) {
+          for(let i = particles.length - 1; i >= 0; i--) {
+              let p = particles[i];
+              p.x += p.vx * dt;
+              p.y += p.vy * dt;
+              p.life -= dt;
+              // Гравитация/замедление
+              p.vx *= 0.95;
+              p.vy *= 0.95;
+              if (p.life <= 0) particles.splice(i, 1);
+          }
+      }
+
+      function drawParticles() {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter'; // Эффект свечения (Bloom)
+          for(let p of particles) {
+              ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+              ctx.fillStyle = p.color;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+              ctx.fill();
+          }
+          ctx.restore();
+      }
+
+      // ОКРУЖАЮЩАЯ СРЕДА (Светлячки)
+      setInterval(() => {
+          if (battleState.active) return;
+          let w = s2w(mouse.x || cv.width/2, mouse.y || cv.height/2);
+          spawnParticles(w.x + (Math.random()-0.5)*800/cam.zoom, w.y + (Math.random()-0.5)*800/cam.zoom, 1, '#ffd966', 10, 2, 3);
+      }, 150);
+
+      // ============ СИСТЕМА БИТВЫ ============
       var battleState = {
-        active: false,
-        timer: 0,
-        duration: 7.0, // Длительность боя
-        playerWin: false,
-        resultLog: '',
-        playerArmy: 0,
-        enemyArmy: 0,
-        playerBuildings: [],
-        enemyBuildings: [],
-        units: []
+        active: false, timer: 0, duration: 6.0, playerWin: false, resultLog: '',
+        playerArmy: 0, enemyArmy: 0, playerBuildings: [], enemyBuildings: [], units: [], clashParticles: false
       };
 
       function mulberry32(a) {
@@ -214,12 +259,10 @@
 
       function findOpponent() {
         if (isMatching) {
-          isMatching = false;
-          off(queueRef);
+          isMatching = false; off(queueRef);
           remove(ref(db, 'queue/' + myPlayerId));
           document.getElementById('findBtn').textContent = '⚔️ Бой';
-          addLog('🚫 Поиск отменен');
-          return;
+          addLog('🚫 Поиск отменен'); return;
         }
 
         isMatching = true;
@@ -228,66 +271,40 @@
 
         let myBuildings = state.buildings.map(b => ({ type: b.type, gx: b.gx, gy: b.gy, level: b.level }));
         
-        set(ref(db, 'queue/' + myPlayerId), { 
-            id: myPlayerId, 
-            army: state.army, 
-            defense: calcDefense(),
-            buildings: myBuildings
-        });
+        set(ref(db, 'queue/' + myPlayerId), { id: myPlayerId, army: state.army, defense: calcDefense(), buildings: myBuildings });
         onDisconnect(ref(db, 'queue/' + myPlayerId)).remove();
 
         onValue(queueRef, (snapshot) => {
           if (!isMatching) return;
-          const players = snapshot.val();
-          if (!players) return;
-
+          const players = snapshot.val(); if (!players) return;
           const oppKeys = Object.keys(players).filter(id => id !== myPlayerId);
 
           if (oppKeys.length > 0) {
-            const oppId = oppKeys[0];
-            const oppData = players[oppId];
+            const oppId = oppKeys[0]; const oppData = players[oppId];
 
             if (myPlayerId < oppId) {
-              isMatching = false;
-              off(queueRef);
+              isMatching = false; off(queueRef);
               document.getElementById('findBtn').textContent = '⚔️ Бой';
-
-              remove(ref(db, 'queue/' + myPlayerId));
-              remove(ref(db, 'queue/' + oppId));
+              remove(ref(db, 'queue/' + myPlayerId)); remove(ref(db, 'queue/' + oppId));
 
               let pPower = state.army * (1 + calcDefense() * 0.02);
               let ePower = oppData.army * (1 + oppData.defense * 0.02);
-              
               let seed = Math.floor((pPower + ePower) * 10000) % 999999; 
               let rand = mulberry32(seed);
-              pPower += rand() * 10;
-              ePower += rand() * 10;
-              
+              pPower += rand() * 10; ePower += rand() * 10;
               let hostWin = pPower > ePower;
 
               let resultObj = {
-                win: hostWin,
-                seed: seed,
-                playerPower: pPower,
-                enemyPower: ePower,
-                enemyArmy: oppData.army,
-                enemyDefense: oppData.defense,
-                hostBuildings: myBuildings,
-                enemyBuildings: oppData.buildings || []
+                win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower,
+                enemyArmy: oppData.army, enemyDefense: oppData.defense,
+                hostBuildings: myBuildings, enemyBuildings: oppData.buildings || []
               };
 
-              set(ref(db, 'battles/' + oppId), { 
-                result: { 
-                  win: !hostWin, 
-                  seed: seed,
-                  playerPower: ePower, 
-                  enemyPower: pPower, 
-                  enemyArmy: state.army, 
-                  enemyDefense: calcDefense(),
-                  enemyBuildings: myBuildings, 
-                  hostBuildings: oppData.buildings || []
-                } 
-              });
+              set(ref(db, 'battles/' + oppId), { result: { 
+                  win: !hostWin, seed: seed, playerPower: ePower, enemyPower: pPower, 
+                  enemyArmy: state.army, enemyDefense: calcDefense(),
+                  enemyBuildings: myBuildings, hostBuildings: oppData.buildings || []
+              }});
               
               startBattleAnimation(resultObj);
             }
@@ -298,13 +315,9 @@
           if (!isMatching) return;
           const bData = snapshot.val();
           if (bData && bData.result) {
-            isMatching = false;
-            off(queueRef);
-            off(myBattleRef);
-            remove(ref(db, 'queue/' + myPlayerId));
-            remove(myBattleRef);
+            isMatching = false; off(queueRef); off(myBattleRef);
+            remove(ref(db, 'queue/' + myPlayerId)); remove(myBattleRef);
             document.getElementById('findBtn').textContent = '⚔️ Бой';
-            
             startBattleAnimation(bData.result);
           }
         });
@@ -320,95 +333,53 @@
       }
 
       function startBattleAnimation(result) {
-        // Прячем весь интерфейс и включаем режим битвы
         document.body.classList.add('in-battle');
-        battleState.active = true;
-        battleState.timer = 0;
-        battleState.playerWin = result.win;
-        battleState.playerArmy = state.army;
-        battleState.enemyArmy = result.enemyArmy;
-        battleState.playerBuildings = result.hostBuildings || [];
-        battleState.enemyBuildings = result.enemyBuildings || [];
-        battleState.units = [];
+        battleState.active = true; battleState.timer = 0; battleState.playerWin = result.win;
+        battleState.playerArmy = state.army; battleState.enemyArmy = result.enemyArmy;
+        battleState.playerBuildings = result.hostBuildings || []; battleState.enemyBuildings = result.enemyBuildings || [];
+        battleState.units = []; battleState.clashParticles = false; particles = [];
 
         let rand = mulberry32(result.seed);
-
-        let totalUnits = 60;
+        let totalUnits = 50;
         let myUnits = Math.max(10, Math.floor(totalUnits * (state.army / (state.army + result.enemyArmy + 1))));
         let enemyUnits = Math.max(10, totalUnits - myUnits);
 
-        // Игрок снизу, Враг сверху
-        // Спавн войск игрока (снизу, из замка)
         for(let i=0; i<myUnits; i++) {
-          battleState.units.push({
-            side: 'player',
-            x: cv.width / 2 + (rand() - 0.5) * 100,
-            y: cv.height * 0.9 - rand() * 50,
-            targetX: cv.width / 2 + (rand() - 0.5) * 200,
-            targetY: cv.height * 0.5,
-            speed: 80 + rand() * 60,
-            swing: rand() * 10
-          });
+          battleState.units.push({ side: 'player', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.9 - rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10, type: Math.random() > 0.5 ? 'sword' : 'axe' });
         }
-        // Спавн войск врага (сверху, из замка)
         for(let i=0; i<enemyUnits; i++) {
-          battleState.units.push({
-            side: 'enemy',
-            x: cv.width / 2 + (rand() - 0.5) * 100,
-            y: cv.height * 0.1 + rand() * 50,
-            targetX: cv.width / 2 + (rand() - 0.5) * 200,
-            targetY: cv.height * 0.5,
-            speed: 80 + rand() * 60,
-            swing: rand() * 10
-          });
+          battleState.units.push({ side: 'enemy', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.1 + rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10, type: Math.random() > 0.5 ? 'sword' : 'axe' });
         }
 
-        battleState.resultLog = '⚔️ Против: Живой Игрок<br>';
-        battleState.resultLog += '🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>';
-        battleState.resultLog += '🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>';
-        battleState.resultLog += '💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
+        battleState.resultLog = '⚔️ Против: Живой Игрок<br>🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
       }
 
       function updateBattle(dt) {
         if (!battleState.active) return;
         battleState.timer += dt;
 
+        if (battleState.timer > 2.5 && battleState.timer < 4.5 && !battleState.clashParticles) {
+            battleState.clashParticles = true;
+            spawnParticles(cv.width/2, cv.height/2, 50, '#ffd700', 300, 4, 1.5); // Искры при столкновении
+        }
+
         for (let u of battleState.units) {
-          // Фаза 1: Марш (0 - 2.5 сек)
           if (battleState.timer < 2.5) {
-            let dx = u.targetX - u.x;
-            let dy = u.targetY - u.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > 5) {
-              u.x += (dx / dist) * u.speed * dt;
-              u.y += (dy / dist) * u.speed * dt;
-            }
-          } 
-          // Фаза 2: Битва (2.5 - 5 сек)
-          else if (battleState.timer < 5.0) {
-            u.x += (Math.random() - 0.5) * 30 * dt;
-            u.y += (Math.random() - 0.5) * 30 * dt;
-          } 
-          // Фаза 3: Победа/Отступление (5 - 7 сек)
-          else {
-            if (u.side === 'player') {
-              u.x += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
-              u.y += (battleState.playerWin ? -(Math.random() * 50) : (Math.random() * 50)) * dt;
-            } else {
-              u.x += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
-              u.y += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
-            }
+            let dx = u.targetX - u.x; let dy = u.targetY - u.y; let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist > 5) { u.x += (dx / dist) * u.speed * dt; u.y += (dy / dist) * u.speed * dt; }
+          } else if (battleState.timer < 4.5) {
+            u.x += (Math.random() - 0.5) * 40 * dt; u.y += (Math.random() - 0.5) * 40 * dt;
+            if(Math.random() > 0.9) spawnParticles(u.x, u.y, 1, u.side === 'player' ? '#3498db' : '#e74c3c', 50, 2, 0.5);
+          } else {
+            u.x += (u.side === 'player' ? (battleState.playerWin ? 1 : -1) : (battleState.playerWin ? -1 : 1)) * u.speed * dt;
           }
         }
 
         if (battleState.timer >= battleState.duration) {
-          battleState.active = false;
-          document.body.classList.remove('in-battle');
+          battleState.active = false; document.body.classList.remove('in-battle');
           
           if (battleState.playerWin) {
-            var gr = 30 + Math.floor(battleState.enemyArmy * 1.2);
-            var wr = 15 + Math.floor(battleState.enemyArmy * 0.8);
-            var loss = Math.floor(battleState.playerArmy * 0.15);
+            var gr = 30 + Math.floor(battleState.enemyArmy * 1.2); var wr = 15 + Math.floor(battleState.enemyArmy * 0.8); var loss = Math.floor(battleState.playerArmy * 0.15);
             state.gold += gr; state.wood += wr; state.army = Math.max(5, battleState.playerArmy - loss); state.wins++;
             battleState.resultLog += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии';
             addLog('✅ Победа над Живым Игроком');
@@ -419,125 +390,300 @@
             addLog('❌ Поражение от Живого Игрока');
           }
           checkRank(); save(); updateHUD(); renderShop();
-          
           document.getElementById('mtitle').textContent = battleState.playerWin ? '🏆 Победа!' : '💔 Поражение';
           document.getElementById('mcontent').innerHTML = '<div class="blog">' + battleState.resultLog + '</div>';
           document.getElementById('modal').style.display = 'flex';
         }
       }
 
-      // ============ ОТРИСОВКА МИРА БИТВЫ ============
+      // ============ ОТРИСОВКА АРЕНЫ С ЭФФЕКТАМИ ============
       function renderBattle() {
-        var w2 = cv.width / 2;
-        var h2 = cv.height / 2;
+        var w2 = cv.width / 2, h2 = cv.height / 2;
 
-        // Фон (Верх - Враг, Низ - Игрок)
-        // Трава врага
-        ctx.fillStyle = '#3e1e1e'; 
-        ctx.fillRect(0, 0, cv.width, h2);
-        // Трава игрока
-        ctx.fillStyle = '#1e2e1e'; 
-        ctx.fillRect(0, h2, cv.width, h2);
-        
-        // Линия фронта (Река/Грязь)
-        ctx.fillStyle = '#2c1e16';
-        ctx.fillRect(0, h2 - 15, cv.width, 30);
+        // Фон (Земля + Атмосфера)
+        var bgGrad = ctx.createLinearGradient(0, 0, 0, cv.height);
+        bgGrad.addColorStop(0, '#1a2a3a'); // Ночное небо сверху
+        bgGrad.addColorStop(0.5, '#2c1e16'); // Линия фронта
+        bgGrad.addColorStop(1, '#0a1a0a'); // Трава снизу
+        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, cv.width, cv.height);
 
-        // Рисуем Замки
-        drawBattleCastle(w2, cv.height * 0.95, true, '#2980b9'); // Замок игрока
-        drawBattleCastle(w2, cv.height * 0.05, false, '#c0392b'); // Замок врага
+        // Туман войны у врага
+        var fog = ctx.createRadialGradient(w2, h2, 50, w2, h2, cv.width);
+        fog.addColorStop(0, 'rgba(0,0,0,0)');
+        fog.addColorStop(1, 'rgba(20,10,10,0.8)');
+        ctx.fillStyle = fog; ctx.fillRect(0, 0, cv.width, cv.height);
 
-        // Рисуем постройки
+        // Замки (Воксельные)
+        drawVoxelCastle(w2, cv.height * 0.95, true, '#2980b9');
+        drawVoxelCastle(w2, cv.height * 0.05, false, '#c0392b');
+
+        // Постройки (Изометрия)
         drawArenaBuildings(battleState.enemyBuildings, true, h2);
         drawArenaBuildings(battleState.playerBuildings, false, h2);
 
-        // Войска
+        // Войска (С тенями и свечением)
         for (let u of battleState.units) {
-          ctx.fillStyle = u.side === 'player' ? '#3498db' : '#e74c3c';
-          // Тело
-          ctx.beginPath();
-          ctx.arc(u.x, u.y, 6, 0, Math.PI * 2);
-          ctx.fill();
+          // Тень
+          ctx.fillStyle = 'rgba(0,0,0,0.5)';
+          ctx.beginPath(); ctx.ellipse(u.x, u.y + 5, 8, 4, 0, 0, Math.PI*2); ctx.fill();
+
+          // Свечение меча (Bloom)
+          ctx.shadowColor = u.side === 'player' ? '#3498db' : '#e74c3c';
+          ctx.shadowBlur = 10;
+          ctx.fillStyle = u.side === 'player' ? '#5dade2' : '#f1948a';
+          ctx.beginPath(); ctx.arc(u.x, u.y, 6, 0, Math.PI * 2); ctx.fill();
           
           // Меч
-          ctx.strokeStyle = '#bdc3c7';
-          ctx.lineWidth = 2;
+          ctx.shadowBlur = 5;
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
           ctx.beginPath();
-          let swing = Math.sin(battleState.timer * 15 + u.swing) * 10;
+          let swing = Math.sin(battleState.timer * 20 + u.swing) * 15;
           ctx.moveTo(u.x, u.y-3);
-          ctx.lineTo(u.x, u.y - 15 + (battleState.timer > 2.5 && battleState.timer < 5 ? swing : 0));
+          ctx.lineTo(u.x, u.y - 15 + (battleState.timer > 2.5 && battleState.timer < 4.5 ? swing : 0));
           ctx.stroke();
+          ctx.shadowBlur = 0;
         }
 
-        // Текст статуса
-        let timerText = battleState.timer < 2.5 ? "Наступление..." : (battleState.timer < 5 ? "Битва!" : (battleState.playerWin ? "Победа!" : "Отступление..."));
-        ctx.font = 'bold 28px sans-serif';
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = 'black'; ctx.shadowBlur = 6;
-        ctx.fillText(timerText, w2, h2);
-        
-        ctx.font = 'bold 16px sans-serif';
-        ctx.fillText('Нажмите, чтобы пропустить', w2, cv.height - 20);
+        // Частицы битвы
+        drawParticles();
+
+        // Текст
+        ctx.font = 'bold 30px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff'; ctx.shadowColor = '#000'; ctx.shadowBlur = 10;
+        let text = battleState.timer < 2.5 ? "МАРШ!" : (battleState.timer < 4.5 ? "В БОЙ!" : (battleState.playerWin ? "ПОБЕДА!" : "ПОРАЖЕНИЕ"));
+        ctx.fillText(text, w2, h2);
         ctx.shadowBlur = 0;
       }
 
-      function drawBattleCastle(x, y, isPlayer, color) {
-        ctx.save();
-        ctx.translate(x, y);
+      function drawVoxelCastle(x, y, isPlayer, color) {
+        ctx.save(); ctx.translate(x, y);
+        // Тень
+        ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.beginPath(); ctx.ellipse(0, 10, 60, 20, 0, 0, Math.PI*2); ctx.fill();
         
-        ctx.fillStyle = '#555';
-        ctx.fillRect(-40, isPlayer ? -60 : 0, 80, 60);
-        for(let i=-40; i<40; i+=16) ctx.fillRect(i, isPlayer ? -70 : 50, 8, 10);
+        // Стены
+        ctx.fillStyle = '#666'; ctx.fillRect(-40, isPlayer ? -60 : 0, 80, 60);
+        // Зубцы
+        for(let i=-40; i<40; i+=20) { ctx.fillStyle = '#777'; ctx.fillRect(i, isPlayer ? -70 : 50, 10, 10); }
 
+        // Крыша
         ctx.fillStyle = color;
         ctx.beginPath();
-        if (isPlayer) {
-            ctx.moveTo(-50, -60); ctx.lineTo(0, -100); ctx.lineTo(50, -60);
-        } else {
-            ctx.moveTo(-50, 60); ctx.lineTo(0, 100); ctx.lineTo(50, 60);
-        }
+        if (isPlayer) { ctx.moveTo(-50, -60); ctx.lineTo(0, -100); ctx.lineTo(50, -60); }
+        else { ctx.moveTo(-50, 60); ctx.lineTo(0, 100); ctx.lineTo(50, 60); }
         ctx.closePath(); ctx.fill();
 
-        ctx.restore();
+        // Светящееся окно
+        ctx.shadowColor = '#ffd966'; ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ffd966';
+        ctx.fillRect(-10, isPlayer ? -40 : 20, 20, 20);
+        ctx.shadowBlur = 0; ctx.restore();
       }
 
       function drawArenaBuildings(buildings, isEnemy, midY) {
         if (!buildings || buildings.length === 0) return;
-        
         let scaleX = cv.width / COLS;
-        // Масштабируем по Y так, чтобы влезло в половину экрана (14 рядов)
         let scaleY = midY / (ROWS / 2 + 2); 
 
         buildings.forEach(b => {
-            let def = S[b.type];
-            if (!def) return;
-
+            let def = S[b.type]; if (!def) return;
             let bx = b.gx * scaleX + scaleX/2;
-            // Для врага инвертируем Y
             let by = isEnemy ? (midY - ((ROWS - b.gy) * scaleY) - 20) : (midY + (b.gy * scaleY) + 20);
-
-            // Не рисуем, если вылезли за пределы экрана
             if (bx < 0 || bx > cv.width || by < 0 || by > cv.height) return;
-
-            let sz = scaleX * def.size * 0.8;
-
-            // Домик
-            ctx.fillStyle = bcolor(b.type).l;
-            ctx.fillRect(bx - sz/2, by - sz/2, sz, sz);
-            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(bx - sz/2, by - sz/2, sz, sz);
             
-            // Иконка
-            ctx.font = (sz * 0.7) + 'px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
+            let sz = scaleX * def.size * 0.8;
+            let col = bcolor(b.type);
+
+            // Тень
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.beginPath(); ctx.ellipse(bx, by + sz*0.3, sz*0.6, sz*0.3, 0, 0, Math.PI*2); ctx.fill();
+
+            // 3D Куб (Стены)
+            ctx.fillStyle = col.l;
+            ctx.fillRect(bx - sz/2, by - sz/2, sz, sz);
+            ctx.fillStyle = col.d; // Боковая грань
+            ctx.fillRect(bx + sz/2, by - sz/2, sz*0.2, sz);
+            // Крыша
+            ctx.fillStyle = col.r;
+            ctx.beginPath();
+            ctx.moveTo(bx - sz/2, by - sz/2);
+            ctx.lineTo(bx, by - sz/2 - sz*0.3);
+            ctx.lineTo(bx + sz/2 + sz*0.2, by - sz/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Иконка со свечением
+            ctx.font = (sz * 0.6) + 'px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#fff'; ctx.shadowBlur = 8;
             ctx.fillText(def.icon, bx, by);
+            ctx.shadowBlur = 0;
         });
       }
 
-      // ============ ОСТАЛЬНАЯ ИГРА ============
+      // ============ ОСТАЛЬНАЯ ИГРА (С ШЕЙДЕРАМИ) ============
+      
+      // Генерация текстурных тайлов
+      function drawVoxelGround() {
+        var tl = s2w(0, 0), br = s2w(cv.width, cv.height);
+        var minX = Math.max(0, Math.floor(tl.x / GS) - 1), maxX = Math.min(COLS, Math.ceil(br.x / GS) + 1);
+        var minY = Math.max(0, Math.floor(tl.y / GS) - 1), maxY = Math.min(ROWS, Math.ceil(br.y / GS) + 1);
+        
+        for (var gy = minY; gy < maxY; gy++) {
+          for (var gx = minX; gx < maxX; gx++) {
+            var p = w2s(gx * GS, gy * GS), cs = GS * cam.zoom;
+            
+            // Базовый цвет (с вариациями, как трава в майнкрафте)
+            var hash = (gx * 7 + gy * 13) % 5;
+            var shades = ['#4a7a42', '#45713e', '#4f8047', '#427039', '#527d45'];
+            ctx.fillStyle = shades[hash];
+            ctx.fillRect(p.x, p.y, cs + 1, cs + 1);
+
+            // Псевдо-3D граница блока (Ambient Occlusion)
+            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+            ctx.lineWidth = Math.max(1, cam.zoom);
+            ctx.strokeRect(p.x, p.y, cs, cs);
+
+            // Травинки для детализации (только если зум достаточный)
+            if (cam.zoom > 0.5 && hash === 0 && Math.random() > 0.7) {
+                ctx.fillStyle = '#6b9e58';
+                ctx.fillRect(p.x + cs*0.2, p.y + cs*0.6, 2, 4);
+                ctx.fillRect(p.x + cs*0.7, p.y + cs*0.4, 2, 3);
+            }
+          }
+        }
+        
+        // Рамка карты (свечение)
+        var ttl = w2s(0, 0), tbr = w2s(COLS * GS, ROWS * GS);
+        ctx.save(); ctx.fillStyle = 'rgba(10,20,10,0.85)';
+        ctx.fillRect(0, 0, cv.width, Math.max(0, ttl.y));
+        if (tbr.y < cv.height) ctx.fillRect(0, tbr.y, cv.width, cv.height - tbr.y);
+        if (ttl.x > 0) ctx.fillRect(0, Math.max(0, ttl.y), Math.max(0, ttl.x), Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
+        if (tbr.x < cv.width) ctx.fillRect(tbr.x, Math.max(0, ttl.y), cv.width - tbr.x, Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
+        ctx.restore();
+        
+        ctx.strokeStyle = '#d4af37'; ctx.lineWidth = Math.max(2, 3 * cam.zoom);
+        ctx.shadowColor = '#ffd966'; ctx.shadowBlur = 15;
+        ctx.setLineDash([15 * cam.zoom, 10 * cam.zoom]); ctx.strokeRect(ttl.x, ttl.y, tbr.x - ttl.x, tbr.y - ttl.y); ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+      }
+
+      // Воксельное дерево (как в майнкрафте)
+      function drawVoxelTree(t) {
+        var p = w2s(t.x, t.y), z = cam.zoom;
+        if (p.x < -100 || p.x > cv.width + 100 || p.y < -150 || p.y > cv.height + 100) return;
+        
+        var grown = t.growDur > 0 ? Math.min(1, t.age / t.growDur) : 1;
+        var sway = Math.sin(t.phase + performance.now() * 0.001 * t.sway) * 0.05;
+        var sz = t.size * GS * z * 0.55 * (0.3 + 0.7 * grown);
+        var def = TREE_TYPES[t.type];
+        
+        ctx.save();
+        ctx.globalAlpha = 0.4 + 0.6 * grown;
+        ctx.translate(p.x, p.y);
+        
+        // Тень от дерева
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath(); ctx.ellipse(sz*0.2, sz*0.2, sz*0.5, sz*0.2, 0, 0, Math.PI*2); ctx.fill();
+
+        // Тряска при рубке
+        if (t.chopPhase > 0) {
+            t.chopPhase -= 0.5;
+            ctx.translate(Math.sin(t.chopPhase * 30) * 3 * z, 0);
+        }
+
+        // Ствол (Куб)
+        ctx.fillStyle = def.trunk;
+        ctx.fillRect(-sz*0.1, -sz*0.4, sz*0.2, sz*0.5);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; // Боковая тень
+        ctx.fillRect(sz*0.05, -sz*0.4, sz*0.05, sz*0.5);
+
+        ctx.rotate(sway);
+        
+        // Листва (Кубы)
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10;
+        ctx.fillStyle = def.color1;
+        ctx.fillRect(-sz*0.5, -sz*0.8, sz*1.0, sz*0.6); // Центр
+        ctx.fillRect(-sz*0.3, -sz*1.1, sz*0.6, sz*0.4); // Верх
+        ctx.fillStyle = def.color2; // Блики солнца
+        ctx.fillRect(-sz*0.4, -sz*0.7, sz*0.3, sz*0.3);
+        ctx.fillRect(-sz*0.2, -sz*1.0, sz*0.3, sz*0.2);
+        
+        ctx.restore();
+      }
+
+      // 3D Здание
+      function drawVoxelBuilding(b) {
+        var def = S[b.type]; if (!def) return;
+        var size = def.size, p = w2s(b.gx * GS, b.gy * GS), ts = GS * size * cam.zoom;
+        var col = bcolor(b.type);
+        
+        ctx.save(); 
+        ctx.translate(p.x + ts / 2, p.y + ts / 2);
+        
+        // Базовая тень
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath(); ctx.ellipse(0, ts * 0.4, ts * 0.5, ts * 0.2, 0, 0, Math.PI * 2); ctx.fill();
+
+        var w = ts * 0.8, h = ts * 0.6, dp = ts * 0.2;
+        
+        // Задняя стенка
+        ctx.fillStyle = col.d;
+        ctx.fillRect(-w / 2, -h / 2 - dp, w, h);
+        
+        // Передняя стенка (Свет)
+        ctx.fillStyle = col.l;
+        ctx.fillRect(-w / 2, -h / 2, w, h);
+        
+        // Боковая стенка
+        ctx.fillStyle = col.r;
+        ctx.beginPath();
+        ctx.moveTo(w/2, -h/2); ctx.lineTo(w/2 + dp, -h/2 - dp);
+        ctx.lineTo(w/2 + dp, h/2 - dp); ctx.lineTo(w/2, h/2);
+        ctx.fill();
+
+        // Крыша (3D)
+        ctx.fillStyle = col.r;
+        ctx.beginPath();
+        ctx.moveTo(-w/2, -h/2); ctx.lineTo(0, -h/2 - dp*1.5); ctx.lineTo(w/2, -h/2);
+        ctx.lineTo(w/2 + dp, -h/2 - dp); ctx.lineTo(0, -h/2 - dp*2.5); ctx.lineTo(-w/2 - dp, -h/2 - dp);
+        ctx.closePath(); ctx.fill();
+
+        // Светящиеся окна (Bloom)
+        ctx.shadowColor = '#ffd966'; ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ffd966';
+        ctx.fillRect(-w*0.3, -h*0.1, w*0.15, h*0.2);
+        ctx.fillRect(w*0.15, -h*0.1, w*0.15, h*0.2);
+        ctx.shadowBlur = 0;
+
+        // Иконка
+        ctx.font = ts * 0.3 + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff'; ctx.shadowColor = 'black'; ctx.shadowBlur = 4;
+        ctx.fillText(def.icon, 0, -h * 0.7);
+        ctx.shadowBlur = 0;
+        
+        ctx.restore();
+      }
+
+      function drawShaderOverlay() {
+        // God Rays (Солнечные лучи)
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        var sunGrad = ctx.createRadialGradient(cv.width*0.8, 0, 100, cv.width*0.8, 0, cv.width);
+        sunGrad.addColorStop(0, 'rgba(255, 240, 150, 0.15)');
+        sunGrad.addColorStop(1, 'rgba(255, 240, 150, 0)');
+        ctx.fillStyle = sunGrad;
+        ctx.fillRect(0, 0, cv.width, cv.height);
+        ctx.restore();
+
+        // Виньетка (Затемнение по краям)
+        var vig = ctx.createRadialGradient(cv.width/2, cv.height/2, cv.height*0.4, cv.width/2, cv.height/2, cv.height*1.2);
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.6)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, cv.width, cv.height);
+      }
+
+      // ... (Остальные функции: логика игры, гражданские, ввод, сохранение остаются без изменений) ...
+
       function makeTreeAt(gx, gy) {
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
         if (anyOcc(gx, gy, 1)) return false;
@@ -720,107 +866,73 @@
         }
       }
 
-      function drawTree(t) {
-        var p = w2s(t.x, t.y), z = cam.zoom;
-        if (p.x < -80 || p.x > cv.width + 80 || p.y < -120 || p.y > cv.height + 80) return;
-        var grown = t.growDur > 0 ? Math.min(1, t.age / t.growDur) : 1;
-        var growScale = 0.3 + 0.7 * grown;
-        var sway = Math.sin(t.phase + performance.now() * 0.001 * t.sway) * 0.03;
-        var sz = t.size * GS * z * 0.55 * growScale;
-        var def = TREE_TYPES[t.type];
-        var shake = 0;
-        if (t.chopPhase > 0) { t.chopPhase -= 0.5; shake = Math.sin(t.chopPhase * 30) * 2 * z; }
-        ctx.save(); ctx.globalAlpha = 0.5 + 0.5 * grown; ctx.translate(p.x + shake, p.y);
-        ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(0, sz * 0.05, sz * 0.35, sz * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = def.trunk; ctx.beginPath(); ctx.moveTo(-sz * 0.08, 0); ctx.lineTo(sz * 0.08, 0); ctx.lineTo(sz * 0.05, -sz * 0.5); ctx.lineTo(-sz * 0.05, -sz * 0.5); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = Math.max(0.5, z); ctx.stroke();
-        ctx.translate(0, -sz * 0.55); ctx.rotate(sway);
-        ctx.fillStyle = def.color1; ctx.beginPath(); ctx.arc(-sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = def.color2; ctx.beginPath(); ctx.arc(-sz * 0.1, -sz * 0.15, sz * 0.22, 0, Math.PI * 2); ctx.arc(sz * 0.15, -sz * 0.1, sz * 0.18, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = Math.max(0.5, z); ctx.beginPath(); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.stroke();
-        ctx.restore();
-      }
-
+      // Отрисовка жителя (с тенью и свечением инструмента)
       function drawCitizen(c) {
         var p = w2s(c.x, c.y), z = cam.zoom;
         if (p.x < -60 || p.x > cv.width + 60 || p.y < -60 || p.y > cv.height + 60) return;
-        var bob = Math.sin(c.phase) * 1.5 * z, legSwing = Math.sin(c.phase) * 3 * z, bodyH = 14 * z, headR = 4 * z;
+        
+        var bob = Math.sin(c.phase) * 2 * z, legSwing = Math.sin(c.phase) * 3 * z, bodyH = 14 * z, headR = 4 * z;
         var baseY = p.y + bob, chopping = c.choppingTimer > 0, axeSwing = chopping ? Math.sin(c.phase * 3) * 0.9 : 0;
+
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + bodyH * 0.55, 6 * z, 2.5 * z, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = Math.max(1, 2 * z); ctx.lineCap = 'round';
+        // Тень
+        ctx.fillStyle = 'rgba(0,0,0,0.4)'; 
+        ctx.beginPath(); ctx.ellipse(p.x, p.y + bodyH * 0.55, 8 * z, 3 * z, 0, 0, Math.PI * 2); ctx.fill();
+        
+        // Ноги
+        ctx.strokeStyle = '#2a1a0a'; ctx.lineWidth = Math.max(1, 2 * z); ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(p.x - 2 * z, baseY + bodyH * 0.15); ctx.lineTo(p.x - 2 * z + legSwing * 0.3, baseY + bodyH * 0.6); ctx.moveTo(p.x + 2 * z, baseY + bodyH * 0.15); ctx.lineTo(p.x + 2 * z - legSwing * 0.3, baseY + bodyH * 0.6); ctx.stroke();
-        ctx.fillStyle = c.shirt; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6, 2 * z); else ctx.rect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1 * z; ctx.stroke();
-        ctx.strokeStyle = c.skin; ctx.lineWidth = Math.max(1, 1.8 * z); var armSwing = Math.sin(c.phase + Math.PI) * 2 * z;
-        ctx.beginPath(); ctx.moveTo(p.x - 4 * z, baseY); ctx.lineTo(p.x - 6 * z, baseY + bodyH * 0.4 + armSwing); ctx.moveTo(p.x + 4 * z, baseY); if (chopping) ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.2 - axeSwing * 10 * z); else ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.4 - armSwing); ctx.stroke();
+        
+        // Тело
+        ctx.fillStyle = c.shirt; ctx.beginPath(); 
+        if (ctx.roundRect) ctx.roundRect(p.x - 5 * z, baseY - 2 * z, 10 * z, bodyH * 0.6, 3 * z); 
+        else ctx.rect(p.x - 5 * z, baseY - 2 * z, 10 * z, bodyH * 0.6); 
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1 * z; ctx.stroke();
+        
+        // Руки
+        ctx.strokeStyle = c.skin; ctx.lineWidth = Math.max(1, 2 * z); var armSwing = Math.sin(c.phase + Math.PI) * 2 * z;
+        ctx.beginPath(); ctx.moveTo(p.x - 4 * z, baseY); ctx.lineTo(p.x - 6 * z, baseY + bodyH * 0.4 + armSwing); ctx.moveTo(p.x + 4 * z, baseY); 
+        if (chopping) ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.2 - axeSwing * 10 * z); 
+        else ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.4 - armSwing); 
+        ctx.stroke();
+
+        // Инструмент
         if (c.role === 'lumberjack') {
           var ax = p.x + 6 * z, ay = baseY + bodyH * 0.2 - (chopping ? axeSwing * 10 * z : armSwing);
-          ctx.strokeStyle = '#8b6914'; ctx.lineWidth = Math.max(1, 1.5 * z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 3 * z, ay - 4 * z); ctx.stroke();
-          ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.moveTo(ax + 3 * z, ay - 4 * z); ctx.lineTo(ax + 6 * z, ay - 5 * z); ctx.lineTo(ax + 5 * z, ay - 2 * z); ctx.closePath(); ctx.fill();
-          ctx.font = 'bold ' + Math.max(8, 4 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeText('🪓', p.x, baseY - 9 * z);
-          ctx.fillStyle = '#ffd966'; ctx.fillText('🪓', p.x, baseY - 9 * z);
+          ctx.strokeStyle = '#5c3a1f'; ctx.lineWidth = Math.max(1, 1.5 * z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 3 * z, ay - 4 * z); ctx.stroke();
+          
+          // Свечение топора (Bloom)
+          ctx.shadowColor = '#bdc3c7'; ctx.shadowBlur = 5;
+          ctx.fillStyle = '#ecf0f1'; ctx.beginPath(); ctx.moveTo(ax + 3 * z, ay - 4 * z); ctx.lineTo(ax + 6 * z, ay - 5 * z); ctx.lineTo(ax + 5 * z, ay - 2 * z); ctx.closePath(); ctx.fill();
+          ctx.shadowBlur = 0;
+
           if (chopping && c.targetTree) {
-            var w = 20 * z, h = 3 * z, prog = 1 - (c.choppingTimer / CHOP_DURATION);
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w, h); ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w * prog, h);
+            var w = 20 * z, h = 4 * z, prog = 1 - (c.choppingTimer / CHOP_DURATION);
+            ctx.fillStyle = 'rgba(0,0,0,0.8)'; ctx.fillRect(p.x - w / 2, baseY - 18 * z, w, h); 
+            ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - w / 2, baseY - 18 * z, w * prog, h);
           }
         }
+
+        // Голова
         ctx.fillStyle = c.skin; ctx.beginPath(); ctx.arc(p.x, baseY - 4 * z, headR, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1 * z; ctx.stroke();
+        ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1 * z; ctx.stroke();
         ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(p.x, baseY - 5.5 * z, headR * 0.95, Math.PI, 0); ctx.fill();
+        
+        // Глаза
         var eyeOff = c.dir * 1.2 * z; ctx.fillStyle = '#000';
         ctx.beginPath(); ctx.arc(p.x - 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI * 2); ctx.arc(p.x + 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI * 2); ctx.fill();
-        if (c.carrying && !chopping) {
-          ctx.fillStyle = '#8b6914'; ctx.save(); ctx.translate(p.x, baseY + bodyH * 0.3); ctx.rotate(0.3); ctx.fillRect(-1 * z, -6 * z, 2 * z, 12 * z); ctx.strokeStyle = '#5c3a1f'; ctx.lineWidth = 0.5 * z; ctx.strokeRect(-1 * z, -6 * z, 2 * z, 12 * z); ctx.restore();
-        }
-        ctx.restore();
-      }
 
-      function drawGround() {
-        var g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, '#0d1a10'); g.addColorStop(1, '#05100a'); ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
-        var tl = s2w(0, 0), br = s2w(cv.width, cv.height);
-        var minX = Math.max(0, Math.floor(tl.x / GS) - 1), maxX = Math.min(COLS, Math.ceil(br.x / GS) + 1);
-        var minY = Math.max(0, Math.floor(tl.y / GS) - 1), maxY = Math.min(ROWS, Math.ceil(br.y / GS) + 1);
-        for (var gy = minY; gy < maxY; gy++) {
-          for (var gx = minX; gx < maxX; gx++) {
-            var p = w2s(gx * GS, gy * GS), cs = GS * cam.zoom;
-            var shade = ['#4a7a42', '#45713e', '#4f8047', '#427039', '#527d45'][(gx * 7 + gy * 13) % 5];
-            ctx.fillStyle = shade; ctx.fillRect(p.x, p.y, cs + 1, cs + 1);
-          }
+        // Бревно
+        if (c.carrying && !chopping) {
+          ctx.fillStyle = '#8b6914'; ctx.save(); ctx.translate(p.x, baseY + bodyH * 0.3); ctx.rotate(0.3); ctx.fillRect(-1.5 * z, -7 * z, 3 * z, 14 * z); ctx.strokeStyle = '#5c3a1f'; ctx.lineWidth = 0.5 * z; ctx.strokeRect(-1.5 * z, -7 * z, 3 * z, 14 * z); ctx.restore();
         }
-        var ttl = w2s(0, 0), tbr = w2s(COLS * GS, ROWS * GS); ctx.save(); ctx.fillStyle = 'rgba(10,20,10,0.55)';
-        ctx.fillRect(0, 0, cv.width, Math.max(0, ttl.y));
-        if (tbr.y < cv.height) ctx.fillRect(0, tbr.y, cv.width, cv.height - tbr.y);
-        if (ttl.x > 0) ctx.fillRect(0, Math.max(0, ttl.y), Math.max(0, ttl.x), Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
-        if (tbr.x < cv.width) ctx.fillRect(tbr.x, Math.max(0, ttl.y), cv.width - tbr.x, Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
         ctx.restore();
-        ctx.strokeStyle = '#d4af37'; ctx.lineWidth = Math.max(2, 3 * cam.zoom);
-        ctx.setLineDash([12 * cam.zoom, 8 * cam.zoom]); ctx.strokeRect(ttl.x, ttl.y, tbr.x - ttl.x, tbr.y - ttl.y); ctx.setLineDash([]);
       }
 
       function bcolor(t) {
         var c = { house: { l: '#d4a574', d: '#8b6b3f', r: '#a0522d' }, farm: { l: '#9acd32', d: '#6b8e23', r: '#8b4513' }, lumberMill: { l: '#8b6b3f', d: '#5c4a2e', r: '#654321' }, barracks: { l: '#a0522d', d: '#654321', r: '#8b0000' }, blacksmith: { l: '#696969', d: '#404040', r: '#2f2f2f' }, wall: { l: '#a9a9a9', d: '#696969', r: '#808080' }, market: { l: '#daa520', d: '#b8860b', r: '#8b6914' }, tower: { l: '#b0b0b0', d: '#707070', r: '#4a4a4a' }, castle: { l: '#c0c0c0', d: '#808080', r: '#4a4a6a' }, dragonLair: { l: '#8b0000', d: '#4a0000', r: '#ff4500' } };
         return c[t] || { l: '#999', d: '#666', r: '#444' };
-      }
-
-      function drawBuilding(b) {
-        var def = S[b.type]; if (!def) return;
-        var size = def.size, p = w2s(b.gx * GS, b.gy * GS), ts = GS * size * cam.zoom;
-        ctx.save(); ctx.translate(p.x + ts / 2, p.y + ts / 2);
-        ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, ts * 0.42, ts * 0.42, ts * 0.14, 0, 0, Math.PI * 2); ctx.fill();
-        var w = ts * 0.78, h = ts * 0.58, dp = ts * 0.18, col = bcolor(b.type);
-        var gr = ctx.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, col.l); gr.addColorStop(1, col.d); ctx.fillStyle = gr;
-        ctx.beginPath(); ctx.moveTo(-w / 2, -h / 2 + dp); ctx.lineTo(w / 2, -h / 2 + dp); ctx.lineTo(w / 2, h / 2 + dp); ctx.lineTo(-w / 2, h / 2 + dp); ctx.closePath(); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = Math.max(1, cam.zoom * 1.5); ctx.stroke();
-        ctx.fillStyle = col.r; ctx.beginPath(); ctx.moveTo(-w / 2, -h / 2 + dp); ctx.lineTo(0, -h / 2 - dp * 0.4); ctx.lineTo(w / 2, -h / 2 + dp); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = col.d; ctx.beginPath(); ctx.moveTo(w / 2, -h / 2 + dp); ctx.lineTo(w / 2, h / 2 + dp); ctx.lineTo(w / 2 - dp, h / 2 + dp - dp * 0.5); ctx.lineTo(w / 2 - dp, -h / 2 + dp - dp * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.font = ts * 0.38 + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(def.icon, 0, dp * 0.4);
-        if (b.level > 0) {
-          var st = ''; for (var i = 0; i < Math.min(b.level, 5); i++) st += '★';
-          ctx.font = 'bold ' + Math.max(9, ts * 0.11) + 'px sans-serif'; ctx.fillStyle = '#ffd966';
-          ctx.strokeStyle = 'rgba(0,0,0,0.8)'; ctx.lineWidth = 2; ctx.strokeText(st, 0, h / 2 + dp * 0.85); ctx.fillText(st, 0, h / 2 + dp * 0.85);
-        }
-        ctx.restore();
       }
 
       function drawHover() {
@@ -831,10 +943,13 @@
           var b = buildingAt(g.gx, g.gy);
           if (b) {
             var sz = S[b.type].size, bp = w2s(b.gx * GS, b.gy * GS);
-            ctx.fillStyle = 'rgba(255,50,50,0.4)'; ctx.fillRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
-            ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 3; ctx.strokeRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
+            ctx.fillStyle = 'rgba(255,50,50,0.5)'; ctx.fillRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
+            ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 3; ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 10; ctx.strokeRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
           }
-        } else if (!placing) { ctx.strokeStyle = 'rgba(255,217,102,0.85)'; ctx.lineWidth = 2; ctx.strokeRect(p.x, p.y, GS * cam.zoom, GS * cam.zoom); }
+        } else if (!placing) { 
+            ctx.strokeStyle = 'rgba(255,217,102,0.9)'; ctx.lineWidth = 2; ctx.shadowColor = '#ffd966'; ctx.shadowBlur = 10;
+            ctx.strokeRect(p.x, p.y, GS * cam.zoom, GS * cam.zoom); 
+        }
         ctx.restore();
       }
 
@@ -843,28 +958,49 @@
         var def = S[placing], g = s2g(mouse.x, mouse.y), size = def.size;
         var can = g.gx >= 0 && g.gx + size <= COLS && g.gy >= 0 && g.gy + size <= ROWS && !anyOcc(g.gx, g.gy, size) && treeAtIndex(g.gx, g.gy) < 0;
         var p = w2s(g.gx * GS, g.gy * GS), cs = GS * cam.zoom; ctx.save();
-        ctx.fillStyle = can ? 'rgba(80,255,80,0.35)' : 'rgba(255,60,60,0.4)'; ctx.fillRect(p.x, p.y, cs * size, cs * size);
-        ctx.strokeStyle = can ? '#00ff66' : '#ff3333'; ctx.lineWidth = 3; ctx.strokeRect(p.x, p.y, cs * size, cs * size);
-        ctx.font = (cs * size * 0.5) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.8;
+        ctx.fillStyle = can ? 'rgba(80,255,80,0.3)' : 'rgba(255,60,60,0.4)'; ctx.fillRect(p.x, p.y, cs * size, cs * size);
+        ctx.strokeStyle = can ? '#00ff66' : '#ff3333'; ctx.lineWidth = 3; ctx.shadowColor = can ? '#00ff66' : '#ff3333'; ctx.shadowBlur = 15;
+        ctx.strokeRect(p.x, p.y, cs * size, cs * size);
+        ctx.font = (cs * size * 0.5) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.9;
         ctx.fillText(def.icon, p.x + cs * size / 2, p.y + cs * size / 2); ctx.restore();
       }
 
       function render() {
         if (battleState.active) {
           renderBattle();
+          updateParticles(1/60); // Обновляем частицы боя
           return;
         }
 
-        ctx.clearRect(0, 0, cv.width, cv.height); drawGround();
+        ctx.clearRect(0, 0, cv.width, cv.height);
+        
+        // Отрисовка земли
+        drawVoxelGround();
+
+        // Сортировка объектов для правильного наложения
         var items = [];
         for (var i = 0; i < trees.length; i++) items.push({ y: trees[i].y, kind: 'tree', data: trees[i] });
         for (var i = 0; i < state.buildings.length; i++) { var b = state.buildings[i]; items.push({ y: b.gy * GS + S[b.type].size * GS * 0.5, kind: 'b', data: b }); }
         for (var i = 0; i < citizens.length; i++) items.push({ y: citizens[i].y, kind: 'c', data: citizens[i] });
+        
         items.sort(function(a, b) { return a.y - b.y; });
+        
         for (var i = 0; i < items.length; i++) {
-          var it = items[i]; if (it.kind === 'tree') drawTree(it.data); else if (it.kind === 'b') drawBuilding(it.data); else if (it.kind === 'c') drawCitizen(it.data);
+          var it = items[i]; 
+          if (it.kind === 'tree') drawVoxelTree(it.data); 
+          else if (it.kind === 'b') drawVoxelBuilding(it.data); 
+          else if (it.kind === 'c') drawCitizen(it.data);
         }
-        drawHover(); drawPreview();
+        
+        // Отрисовка частиц мира
+        updateParticles(1/60);
+        drawParticles();
+
+        drawHover(); 
+        drawPreview();
+        
+        // Наложение шейдеров (Свет, виньетка)
+        drawShaderOverlay();
       }
 
       var lastR = performance.now();
@@ -922,7 +1058,7 @@
       }
 
       function tryPlace(gx, gy) {
-        if (battleState.active) return; // Запрет строительства во время битвы
+        if (battleState.active) return;
         if (!placing) return;
         
         if (state.buildings.length >= MAX_BUILDINGS) {
@@ -941,11 +1077,16 @@
         if (def.type === 'army') state.army += def.per;
         if (def.type === 'mixed') state.army += def.per * 3;
         if (def.pop) { for (var i = 0; i < def.pop; i++) { var role = def.worker || 'wander'; spawnCitizen(bId, gx + (size - 1) / 2, gy + (size - 1) / 2, role); } }
+        
+        // Эффект пыли при постройке
+        let p = w2s(gx * GS + GS/2, gy * GS + GS/2);
+        spawnParticles(p.x, p.y, 20, '#d4a574', 100, 4, 1);
+
         addLog('✅ ' + def.name + ' построен'); save(); updateHUD(); placing = null; updateBanner(); renderShop();
       }
 
       function demolishBuilding(gx, gy) {
-        if (battleState.active) return; // Запрет сноса во время битвы
+        if (battleState.active) return;
         var b = buildingAt(gx, gy); if (!b) { addLog('❌ Здесь нет здания'); return; }
         var def = S[b.type], refundG = Math.floor(def.cost.g * 0.5), refundW = Math.floor(def.cost.w * 0.5);
         state.gold += refundG; state.wood += refundW;
@@ -953,11 +1094,16 @@
         if (def.type === 'army') state.army = Math.max(0, state.army - def.per);
         if (def.type === 'mixed') state.army = Math.max(0, state.army - def.per * 3);
         var idx = state.buildings.indexOf(b); if (idx >= 0) state.buildings.splice(idx, 1);
+        
+        // Эффект пыли при сносе
+        let p = w2s(b.gx * GS + GS/2, b.gy * GS + GS/2);
+        spawnParticles(p.x, p.y, 30, '#8b6b3f', 150, 5, 1.5);
+
         addLog('🗑️ ' + def.name + ' снесён +' + refundG + '💰'); save(); updateHUD(); demolishMode = false; updateBanner(); renderShop();
       }
 
       function zoomAt(sx, sy, factor) {
-        if (battleState.active) return; // Запрет зума во время битвы
+        if (battleState.active) return;
         var old = cam.zoom, nz = Math.max(cam.minZoom, Math.min(cam.maxZoom, old * factor));
         if (nz === old) return;
         var before = s2w(sx, sy); cam.zoom = nz; var after = s2w(sx, sy);
@@ -998,7 +1144,7 @@
         var ids = getTouchIds();
         if (ids.length === 0) {
           if (touchMode === 'pan' && !touchHasMoved && (Date.now() - touchStartTime) < TAP_MAX_TIME) {
-            if (battleState.active) return; // Пропуск боя по тапу
+            if (battleState.active) return;
             mouse.x = touchStartPos.x; mouse.y = touchStartPos.y; mouse.inside = true;
             var g = s2g(mouse.x, mouse.y);
             if (demolishMode) demolishBuilding(g.gx, g.gy);
@@ -1012,7 +1158,6 @@
 
       cv.addEventListener('click', function(e) { 
         if (battleState.active) {
-            // Досрочное завершение битвы по клику
             battleState.timer = battleState.duration; 
             return; 
         }
@@ -1060,7 +1205,7 @@
         }
       }
       renderShop(); updateHUD();
-      addLog('🏁 Kingdom Runner загружен. Онлайн готов!');
+      addLog('🏁 Kingdom Runner загружен. Шейдеры активны!');
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
 
