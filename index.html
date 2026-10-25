@@ -193,39 +193,22 @@
       var particles = [];
       function spawnParticles(x, y, count, color, speed, size, life) {
           for(let i=0; i<count; i++) {
-              particles.push({
-                  x: x, y: y,
-                  vx: (Math.random() - 0.5) * speed,
-                  vy: (Math.random() - 0.5) * speed,
-                  size: Math.random() * size + 1,
-                  color: color,
-                  life: life + Math.random() * life,
-                  maxLife: life
-              });
+              particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * speed, vy: (Math.random() - 0.5) * speed, size: Math.random() * size + 1, color: color, life: life + Math.random() * life, maxLife: life });
           }
       }
 
       function updateParticles(dt) {
           for(let i = particles.length - 1; i >= 0; i--) {
-              let p = particles[i];
-              p.x += p.vx * dt;
-              p.y += p.vy * dt;
-              p.life -= dt;
-              p.vx *= 0.95;
-              p.vy *= 0.95;
+              let p = particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; p.vx *= 0.95; p.vy *= 0.95;
               if (p.life <= 0) particles.splice(i, 1);
           }
       }
 
       function drawParticles() {
-          ctx.save();
-          ctx.globalCompositeOperation = 'lighter';
+          ctx.save(); ctx.globalCompositeOperation = 'lighter';
           for(let p of particles) {
-              ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
-              ctx.fillStyle = p.color;
-              ctx.beginPath();
-              ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-              ctx.fill();
+              ctx.globalAlpha = Math.max(0, p.life / p.maxLife); ctx.fillStyle = p.color;
+              ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
           }
           ctx.restore();
       }
@@ -239,14 +222,7 @@
       // ============ БИТВА И ПОИСК ============
       var battleState = { active: false, timer: 0, duration: 6.0, playerWin: false, resultLog: '', playerArmy: 0, enemyArmy: 0, playerBuildings: [], enemyBuildings: [], units: [], clashParticles: false };
 
-      function mulberry32(a) {
-        return function() {
-          var t = a += 0x6D2B79F5;
-          t = Math.imul(t ^ t >>> 15, t | 1);
-          t ^= t + Math.imul(t ^ t >>> 7, t | 61);
-          return ((t ^ t >>> 14) >>> 0) / 4294967296;
-        }
-      }
+      function mulberry32(a) { return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
 
       let isMatching = false;
       let matchTimer = null;
@@ -282,6 +258,7 @@
         currentBattleRef = ref(db, 'battles/' + myPlayerId);
 
         let timeLeft = 3;
+        if (matchTimer) clearInterval(matchTimer);
         matchTimer = setInterval(() => {
             if (!isMatching) return;
             timeLeft--;
@@ -311,8 +288,8 @@
               let pPower = state.army * (1 + calcDefense() * 0.02); let ePower = oppData.army * (1 + oppData.defense * 0.02);
               let seed = Math.floor((pPower + ePower) * 10000) % 999999; let rand = mulberry32(seed);
               pPower += rand() * 10; ePower += rand() * 10; let hostWin = pPower > ePower;
-              let resultObj = { win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower, enemyArmy: oppData.army, enemyDefense: oppData.defense, hostBuildings: myBuildings, enemyBuildings: oppData.buildings || [] };
-              set(ref(db, 'battles/' + oppId), { result: { win: !hostWin, seed: seed, playerPower: ePower, enemyPower: pPower, enemyArmy: state.army, enemyDefense: calcDefense(), enemyBuildings: myBuildings, hostBuildings: oppData.buildings || [] }});
+              let resultObj = { win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower, enemyArmy: oppData.army, enemyDefense: oppData.defense, hostBuildings: myBuildings, enemyBuildings: oppData.buildings || [], isBot: false };
+              set(ref(db, 'battles/' + oppId), { result: { win: !hostWin, seed: seed, playerPower: ePower, enemyPower: pPower, enemyArmy: state.army, enemyDefense: calcDefense(), enemyBuildings: myBuildings, hostBuildings: oppData.buildings || [], isBot: false }});
               startBattleAnimation(resultObj);
             }
           }
@@ -334,9 +311,8 @@
       function startBotMatch() {
           isMatching = false;
           document.getElementById('findBtn').textContent = '⚔️ Бой';
-          addLog('🤖 Найден умный бот на Арене ' + (state.rankIndex + 1));
+          addLog('🤖 Соперник не найден. Атакует бот!');
           
-          // Бот подстраивается под текущую арену
           let botArmy = 10 + state.rankIndex * 25 + Math.floor(Math.random() * 15);
           let botDefense = state.rankIndex * 5 + Math.floor(Math.random() * 5);
           let allowedBuildings = RANKS[state.rankIndex].str;
@@ -365,7 +341,7 @@
               win: hostWin, seed: seed, playerPower: pPower, enemyPower: ePower,
               enemyArmy: botArmy, enemyDefense: botDefense,
               hostBuildings: state.buildings.map(b => ({ type: b.type, gx: b.gx, gy: b.gy, level: b.level })),
-              enemyBuildings: botBuildings
+              enemyBuildings: botBuildings, isBot: true
           };
 
           setTimeout(() => { startBattleAnimation(resultObj); }, 500);
@@ -388,8 +364,8 @@
         for(let i=0; i<myUnits; i++) battleState.units.push({ side: 'player', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.9 - rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10 });
         for(let i=0; i<enemyUnits; i++) battleState.units.push({ side: 'enemy', x: cv.width / 2 + (rand() - 0.5) * 100, y: cv.height * 0.1 + rand() * 50, targetX: cv.width / 2 + (rand() - 0.5) * 200, targetY: cv.height * 0.5, speed: 80 + rand() * 60, swing: rand() * 10 });
         
-        let isBot = (result.enemyArmy % 2 === 0 && !result.hasOwnProperty('enemyPower') === false); // Просто проверка
-        battleState.resultLog = '⚔️ Против: Живой Игрок<br>🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
+        let enemyName = result.isBot ? 'Бот' : 'Живой Игрок';
+        battleState.resultLog = '⚔️ Против: ' + enemyName + '<br>🛡️ Ты: ' + Math.floor(state.army) + ' (+защ ' + calcDefense() + ')<br>🛡️ Враг: ' + Math.floor(result.enemyArmy) + ' (+защ ' + result.enemyDefense + ')<br>💥 ' + result.playerPower.toFixed(1) + ' vs ' + result.enemyPower.toFixed(1) + '<br><br>';
       }
 
       function updateBattle(dt) {
