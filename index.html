@@ -91,7 +91,7 @@
       <div class="res-item">🪙 <span id="gold">150</span></div>
       <div class="res-item">🪵 <span id="wood">80</span></div>
       <div class="res-item">⚔️ <span id="army">10</span></div>
-      <div class="res-item">🏗️ <span id="buildCount">0</span>/30</div> <!-- Лимит построек -->
+      <div class="res-item">🏗️ <span id="buildCount">0</span>/30</div>
     </div>
     <div class="rank-badge" id="rank">🏆 Ранг 1: Новобранец</div>
   </div>
@@ -141,7 +141,6 @@
     (function() {
       'use strict';
 
-      // ЛИМИТ ПОСТРОЕК
       var MAX_BUILDINGS = 30;
 
       var RANKS = [
@@ -186,11 +185,11 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // ============ СИСТЕМА АРЕНЫ (CLASH ROYALE) ============
+      // ============ СИСТЕМА БИТВЫ (ОТДЕЛЬНЫЙ МИР) ============
       var battleState = {
         active: false,
         timer: 0,
-        duration: 7.0,
+        duration: 7.0, // Длительность боя
         playerWin: false,
         resultLog: '',
         playerArmy: 0,
@@ -227,7 +226,6 @@
         document.getElementById('findBtn').textContent = '⏳ Поиск...';
         addLog('🔎 Поиск соперника...');
 
-        // ОТПРАВЛЯЕМ ВСЕ ПОСТРОЙКИ С КООРДИНАТАМИ
         let myBuildings = state.buildings.map(b => ({ type: b.type, gx: b.gx, gy: b.gy, level: b.level }));
         
         set(ref(db, 'queue/' + myPlayerId), { 
@@ -322,6 +320,7 @@
       }
 
       function startBattleAnimation(result) {
+        // Прячем весь интерфейс и включаем режим битвы
         document.body.classList.add('in-battle');
         battleState.active = true;
         battleState.timer = 0;
@@ -338,28 +337,29 @@
         let myUnits = Math.max(10, Math.floor(totalUnits * (state.army / (state.army + result.enemyArmy + 1))));
         let enemyUnits = Math.max(10, totalUnits - myUnits);
 
-        // Войска игрока появляются слева (внизу их замка)
+        // Игрок снизу, Враг сверху
+        // Спавн войск игрока (снизу, из замка)
         for(let i=0; i<myUnits; i++) {
           battleState.units.push({
             side: 'player',
-            x: cv.width * 0.25 + (rand() - 0.5) * 100, // Спавн из замка игрока
-            y: cv.height * 0.8 + (rand() - 0.5) * 100,
-            targetX: cv.width / 2,
-            targetY: cv.height / 2,
-            speed: 70 + rand() * 50,
-            offset: rand() * 10
+            x: cv.width / 2 + (rand() - 0.5) * 100,
+            y: cv.height * 0.9 - rand() * 50,
+            targetX: cv.width / 2 + (rand() - 0.5) * 200,
+            targetY: cv.height * 0.5,
+            speed: 80 + rand() * 60,
+            swing: rand() * 10
           });
         }
-        // Войска врага появляются справа (вверху их замка)
+        // Спавн войск врага (сверху, из замка)
         for(let i=0; i<enemyUnits; i++) {
           battleState.units.push({
             side: 'enemy',
-            x: cv.width * 0.75 + (rand() - 0.5) * 100, // Спавн из замка врага
-            y: cv.height * 0.2 + (rand() - 0.5) * 100,
-            targetX: cv.width / 2,
-            targetY: cv.height / 2,
-            speed: 70 + rand() * 50,
-            offset: rand() * 10
+            x: cv.width / 2 + (rand() - 0.5) * 100,
+            y: cv.height * 0.1 + rand() * 50,
+            targetX: cv.width / 2 + (rand() - 0.5) * 200,
+            targetY: cv.height * 0.5,
+            speed: 80 + rand() * 60,
+            swing: rand() * 10
           });
         }
 
@@ -373,27 +373,31 @@
         if (!battleState.active) return;
         battleState.timer += dt;
 
-        // Движение войск к центру
         for (let u of battleState.units) {
-          if (battleState.timer < 3.0) {
+          // Фаза 1: Марш (0 - 2.5 сек)
+          if (battleState.timer < 2.5) {
             let dx = u.targetX - u.x;
             let dy = u.targetY - u.y;
             let dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist > 10) {
+            if (dist > 5) {
               u.x += (dx / dist) * u.speed * dt;
               u.y += (dy / dist) * u.speed * dt;
             }
-          } else if (battleState.timer < 5.0) {
-             // Схватка (тряска)
-             u.x += (Math.random() - 0.5) * 20 * dt;
-             u.y += (Math.random() - 0.5) * 20 * dt;
-          } else {
-             // Отступление / Погоня
-             if (u.side === 'player') {
-                 u.x += (battleState.playerWin ? 1 : -1) * u.speed * 0.8 * dt;
-             } else {
-                 u.x += (battleState.playerWin ? 1 : -1) * u.speed * 0.8 * dt;
-             }
+          } 
+          // Фаза 2: Битва (2.5 - 5 сек)
+          else if (battleState.timer < 5.0) {
+            u.x += (Math.random() - 0.5) * 30 * dt;
+            u.y += (Math.random() - 0.5) * 30 * dt;
+          } 
+          // Фаза 3: Победа/Отступление (5 - 7 сек)
+          else {
+            if (u.side === 'player') {
+              u.x += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
+              u.y += (battleState.playerWin ? -(Math.random() * 50) : (Math.random() * 50)) * dt;
+            } else {
+              u.x += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
+              u.y += (battleState.playerWin ? (Math.random() * 50) : -(Math.random() * 50)) * dt;
+            }
           }
         }
 
@@ -422,88 +426,115 @@
         }
       }
 
-      // Отрисовка арены с сохранением позиций зданий
+      // ============ ОТРИСОВКА МИРА БИТВЫ ============
       function renderBattle() {
         var w2 = cv.width / 2;
         var h2 = cv.height / 2;
 
         // Фон (Верх - Враг, Низ - Игрок)
-        ctx.fillStyle = '#2a1a1a'; // Верх (Враг)
+        // Трава врага
+        ctx.fillStyle = '#3e1e1e'; 
         ctx.fillRect(0, 0, cv.width, h2);
-        ctx.fillStyle = '#1a2a1a'; // Низ (Игрок)
+        // Трава игрока
+        ctx.fillStyle = '#1e2e1e'; 
         ctx.fillRect(0, h2, cv.width, h2);
         
-        // Река / Граница
-        ctx.fillStyle = '#3498db';
-        ctx.fillRect(0, h2 - 10, cv.width, 20);
+        // Линия фронта (Река/Грязь)
+        ctx.fillStyle = '#2c1e16';
+        ctx.fillRect(0, h2 - 15, cv.width, 30);
 
-        // Масштаб для отрисовки сетки 40x28 на половине экрана
-        var scaleX = cv.width / COLS;
-        var scaleY = h2 / ROWS;
+        // Рисуем Замки
+        drawBattleCastle(w2, cv.height * 0.95, true, '#2980b9'); // Замок игрока
+        drawBattleCastle(w2, cv.height * 0.05, false, '#c0392b'); // Замок врага
 
-        // Рисуем постройки врага (верхняя половина)
-        battleState.enemyBuildings.forEach(b => {
-            let bx = b.gx * scaleX + scaleX/2;
-            let by = (ROWS - 1 - b.gy) * scaleY + scaleY/2; // Инвертируем Y для врага
-            drawArenaBuilding(bx, by, b.type, scaleX, '#c0392b');
-        });
-
-        // Замок врага
-        ctx.font = '40px Arial'; ctx.textAlign = 'center';
-        ctx.fillText('🏰', w2, h2 / 2);
-
-        // Рисуем постройки игрока (нижняя половина)
-        battleState.playerBuildings.forEach(b => {
-            let bx = b.gx * scaleX + scaleX/2;
-            let by = h2 + b.gy * scaleY + scaleY/2; // Y относительно низа
-            drawArenaBuilding(bx, by, b.type, scaleX, '#2980b9');
-        });
-
-        // Замок игрока
-        ctx.fillText('🏰', w2, h2 + h2 / 2);
+        // Рисуем постройки
+        drawArenaBuildings(battleState.enemyBuildings, true, h2);
+        drawArenaBuildings(battleState.playerBuildings, false, h2);
 
         // Войска
         for (let u of battleState.units) {
           ctx.fillStyle = u.side === 'player' ? '#3498db' : '#e74c3c';
+          // Тело
           ctx.beginPath();
           ctx.arc(u.x, u.y, 6, 0, Math.PI * 2);
           ctx.fill();
           
+          // Меч
           ctx.strokeStyle = '#bdc3c7';
           ctx.lineWidth = 2;
           ctx.beginPath();
-          let swing = Math.sin(battleState.timer * 10 + u.offset) * 5;
-          let dir = u.side === 'player' ? -1 : 1; // Меч в сторону врага
-          ctx.moveTo(u.x, u.y-4);
-          ctx.lineTo(u.x, u.y - 12 + swing);
+          let swing = Math.sin(battleState.timer * 15 + u.swing) * 10;
+          ctx.moveTo(u.x, u.y-3);
+          ctx.lineTo(u.x, u.y - 15 + (battleState.timer > 2.5 && battleState.timer < 5 ? swing : 0));
           ctx.stroke();
         }
 
         // Текст статуса
-        let timerText = battleState.timer < 3 ? "Марш..." : (battleState.timer < 5 ? "Битва!" : (battleState.playerWin ? "Победа!" : "Поражение..."));
-        ctx.font = 'bold 30px sans-serif';
-        ctx.fillStyle = '#ffd966';
-        ctx.shadowColor = 'black'; ctx.shadowBlur = 5;
-        ctx.fillText(timerText, cv.width / 2, cv.height * 0.1);
+        let timerText = battleState.timer < 2.5 ? "Наступление..." : (battleState.timer < 5 ? "Битва!" : (battleState.playerWin ? "Победа!" : "Отступление..."));
+        ctx.font = 'bold 28px sans-serif';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'black'; ctx.shadowBlur = 6;
+        ctx.fillText(timerText, w2, h2);
+        
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillText('Нажмите, чтобы пропустить', w2, cv.height - 20);
         ctx.shadowBlur = 0;
       }
 
-      function drawArenaBuilding(x, y, type, cellSize, color) {
-          let def = S[type];
-          if(!def) return;
-          let sz = cellSize * def.size * 0.8;
-          
-          ctx.fillStyle = color;
-          ctx.fillRect(x - sz/2, y - sz/2, sz, sz);
-          ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(x - sz/2, y - sz/2, sz, sz);
-          
-          ctx.font = (sz * 0.6) + 'px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#fff';
-          ctx.fillText(def.icon, x, y);
+      function drawBattleCastle(x, y, isPlayer, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-40, isPlayer ? -60 : 0, 80, 60);
+        for(let i=-40; i<40; i+=16) ctx.fillRect(i, isPlayer ? -70 : 50, 8, 10);
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        if (isPlayer) {
+            ctx.moveTo(-50, -60); ctx.lineTo(0, -100); ctx.lineTo(50, -60);
+        } else {
+            ctx.moveTo(-50, 60); ctx.lineTo(0, 100); ctx.lineTo(50, 60);
+        }
+        ctx.closePath(); ctx.fill();
+
+        ctx.restore();
+      }
+
+      function drawArenaBuildings(buildings, isEnemy, midY) {
+        if (!buildings || buildings.length === 0) return;
+        
+        let scaleX = cv.width / COLS;
+        // Масштабируем по Y так, чтобы влезло в половину экрана (14 рядов)
+        let scaleY = midY / (ROWS / 2 + 2); 
+
+        buildings.forEach(b => {
+            let def = S[b.type];
+            if (!def) return;
+
+            let bx = b.gx * scaleX + scaleX/2;
+            // Для врага инвертируем Y
+            let by = isEnemy ? (midY - ((ROWS - b.gy) * scaleY) - 20) : (midY + (b.gy * scaleY) + 20);
+
+            // Не рисуем, если вылезли за пределы экрана
+            if (bx < 0 || bx > cv.width || by < 0 || by > cv.height) return;
+
+            let sz = scaleX * def.size * 0.8;
+
+            // Домик
+            ctx.fillStyle = bcolor(b.type).l;
+            ctx.fillRect(bx - sz/2, by - sz/2, sz, sz);
+            ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx - sz/2, by - sz/2, sz, sz);
+            
+            // Иконка
+            ctx.font = (sz * 0.7) + 'px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(def.icon, bx, by);
+        });
       }
 
       // ============ ОСТАЛЬНАЯ ИГРА ============
@@ -891,9 +922,9 @@
       }
 
       function tryPlace(gx, gy) {
+        if (battleState.active) return; // Запрет строительства во время битвы
         if (!placing) return;
         
-        // ПРОВЕРКА ЛИМИТА ПОСТРОЕК
         if (state.buildings.length >= MAX_BUILDINGS) {
             addLog('❌ Достигнут лимит построек (' + MAX_BUILDINGS + ')! Снесите что-нибудь.');
             return;
@@ -914,6 +945,7 @@
       }
 
       function demolishBuilding(gx, gy) {
+        if (battleState.active) return; // Запрет сноса во время битвы
         var b = buildingAt(gx, gy); if (!b) { addLog('❌ Здесь нет здания'); return; }
         var def = S[b.type], refundG = Math.floor(def.cost.g * 0.5), refundW = Math.floor(def.cost.w * 0.5);
         state.gold += refundG; state.wood += refundW;
@@ -925,6 +957,7 @@
       }
 
       function zoomAt(sx, sy, factor) {
+        if (battleState.active) return; // Запрет зума во время битвы
         var old = cam.zoom, nz = Math.max(cam.minZoom, Math.min(cam.maxZoom, old * factor));
         if (nz === old) return;
         var before = s2w(sx, sy); cam.zoom = nz; var after = s2w(sx, sy);
@@ -965,6 +998,7 @@
         var ids = getTouchIds();
         if (ids.length === 0) {
           if (touchMode === 'pan' && !touchHasMoved && (Date.now() - touchStartTime) < TAP_MAX_TIME) {
+            if (battleState.active) return; // Пропуск боя по тапу
             mouse.x = touchStartPos.x; mouse.y = touchStartPos.y; mouse.inside = true;
             var g = s2g(mouse.x, mouse.y);
             if (demolishMode) demolishBuilding(g.gx, g.gy);
@@ -976,7 +1010,14 @@
 
       cv.addEventListener('touchcancel', function(e) { e.preventDefault(); for (var i = 0; i < e.changedTouches.length; i++) { delete touches[e.changedTouches[i].identifier]; } if (getTouchIds().length === 0) { touchMode = null; touchHasMoved = false; } }, { passive: false });
 
-      cv.addEventListener('click', function(e) { if (mousePanning || mouseMoved) return; var g = s2g(e.clientX, e.clientY); if (demolishMode) demolishBuilding(g.gx, g.gy); else if (placing) tryPlace(g.gx, g.gy); });
+      cv.addEventListener('click', function(e) { 
+        if (battleState.active) {
+            // Досрочное завершение битвы по клику
+            battleState.timer = battleState.duration; 
+            return; 
+        }
+        if (mousePanning || mouseMoved) return; var g = s2g(e.clientX, e.clientY); if (demolishMode) demolishBuilding(g.gx, g.gy); else if (placing) tryPlace(g.gx, g.gy); 
+      });
 
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') { if (placing) { placing = null; updateBanner(); renderShop(); } if (demolishMode) { demolishMode = false; updateBanner(); } }
