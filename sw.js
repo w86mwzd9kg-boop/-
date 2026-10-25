@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kingdom-v1';
+ const CACHE_NAME = 'kingdom-v4';
 const ASSETS = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
