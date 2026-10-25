@@ -9,7 +9,6 @@
   <!-- PWA и Онлайн -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1e12">
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
     * {
@@ -22,8 +21,7 @@
       font-family: 'Segoe UI', sans-serif
     }
 
-    html,
-    body {
+    html, body {
       width: 100%;
       height: 100%;
       overflow: hidden;
@@ -31,498 +29,112 @@
       touch-action: none
     }
 
-    canvas {
-      display: block;
-      cursor: crosshair;
-      touch-action: none
-    }
+    canvas { display: block; cursor: crosshair; touch-action: none }
 
     .hud {
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      right: 12px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      pointer-events: none;
-      z-index: 10;
-      flex-wrap: wrap
+      position: fixed; top: 12px; left: 12px; right: 12px;
+      display: flex; justify-content: space-between; gap: 12px;
+      pointer-events: none; z-index: 10; flex-wrap: wrap
     }
 
-    .hud>* {
-      pointer-events: auto
-    }
+    .hud>* { pointer-events: auto }
 
     .resources {
-      display: flex;
-      gap: 10px;
-      background: rgba(20, 40, 25, .92);
-      padding: 10px 18px;
-      border-radius: 40px;
-      border: 2px solid #d4af37;
-      flex-wrap: wrap
+      display: flex; gap: 10px; background: rgba(20, 40, 25, .92);
+      padding: 10px 18px; border-radius: 40px; border: 2px solid #d4af37; flex-wrap: wrap
     }
 
     .res-item {
-      color: #f5e6b0;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: .85rem
+      color: #f5e6b0; font-weight: bold; display: flex; align-items: center; gap: 6px; font-size: .85rem
     }
 
     .res-item span {
-      background: #0e2b18;
-      padding: 3px 12px;
-      border-radius: 20px;
-      min-width: 60px;
-      text-align: center;
-      border: 1px solid #8b6914;
-      color: #fff8e7
+      background: #0e2b18; padding: 3px 12px; border-radius: 20px;
+      min-width: 60px; text-align: center; border: 1px solid #8b6914; color: #fff8e7
     }
 
     .rank-badge {
-      background: rgba(20, 40, 25, .92);
-      padding: 10px 22px;
-      border-radius: 40px;
-      border: 2px solid #ffd966;
-      color: #ffd966;
-      font-weight: bold;
-      font-size: 1rem
+      background: rgba(20, 40, 25, .92); padding: 10px 22px;
+      border-radius: 40px; border: 2px solid #ffd966; color: #ffd966; font-weight: bold; font-size: 1rem
     }
 
     .shop {
-      position: fixed;
-      right: 12px;
-      top: 90px;
-      bottom: 12px;
-      width: 220px;
-      background: rgba(15, 32, 20, .94);
-      border: 2px solid #d4af37;
-      border-radius: 20px;
-      padding: 12px;
-      overflow-y: auto;
-      z-index: 10;
-      transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s;
-      transform-origin: right center;
+      position: fixed; right: 12px; top: 90px; bottom: 12px; width: 220px;
+      background: rgba(15, 32, 20, .94); border: 2px solid #d4af37;
+      border-radius: 20px; padding: 12px; overflow-y: auto; z-index: 10;
+      transition: transform .3s cubic-bezier(.4, 0, .2, 1), opacity .3s; transform-origin: right center;
     }
 
-    .shop.collapsed {
-      transform: translateX(calc(100% + 20px));
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .shop h3 {
-      color: #ffd966;
-      font-size: 1rem;
-      text-align: center;
-      margin-bottom: 10px;
-      border-bottom: 1px solid #8b6914;
-      padding-bottom: 8px
-    }
-
-    .shop-item {
-      background: #1a3320;
-      border-radius: 14px;
-      padding: 8px;
-      margin-bottom: 8px;
-      border: 1px solid #6b8c5c;
-      cursor: pointer;
-      transition: .15s
-    }
-
-    .shop-item:hover:not(.locked):not(.selected) {
-      background: #24472e;
-      border-color: #ffd966
-    }
-
-    .shop-item.selected {
-      background: #2f5a3a;
-      border-color: #ffd966;
-      box-shadow: 0 0 12px rgba(255, 217, 102, .6)
-    }
-
-    .shop-item.locked {
-      opacity: .4;
-      cursor: not-allowed;
-      filter: grayscale(.7)
-    }
-
-    .shop-top {
-      display: flex;
-      align-items: center;
-      gap: 8px
-    }
-
-    .shop-icon {
-      font-size: 1.6rem;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #0e2414;
-      border-radius: 10px;
-      flex-shrink: 0
-    }
-
-    .shop-name {
-      color: #ffeaac;
-      font-weight: 600;
-      font-size: .85rem
-    }
-
-    .shop-cost {
-      color: #b8d9a8;
-      font-size: .72rem;
-      margin-top: 2px
-    }
-
-    .shop-effect {
-      color: #cfcfb0;
-      font-size: .68rem;
-      margin-top: 3px
-    }
+    .shop.collapsed { transform: translateX(calc(100% + 20px)); opacity: 0; pointer-events: none; }
+    .shop h3 { color: #ffd966; font-size: 1rem; text-align: center; margin-bottom: 10px; border-bottom: 1px solid #8b6914; padding-bottom: 8px }
+    .shop-item { background: #1a3320; border-radius: 14px; padding: 8px; margin-bottom: 8px; border: 1px solid #6b8c5c; cursor: pointer; transition: .15s }
+    .shop-item:hover:not(.locked):not(.selected) { background: #24472e; border-color: #ffd966 }
+    .shop-item.selected { background: #2f5a3a; border-color: #ffd966; box-shadow: 0 0 12px rgba(255, 217, 102, .6) }
+    .shop-item.locked { opacity: .4; cursor: not-allowed; filter: grayscale(.7) }
+    .shop-top { display: flex; align-items: center; gap: 8px }
+    .shop-icon { font-size: 1.6rem; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #0e2414; border-radius: 10px; flex-shrink: 0 }
+    .shop-name { color: #ffeaac; font-weight: 600; font-size: .85rem }
+    .shop-cost { color: #b8d9a8; font-size: .72rem; margin-top: 2px }
+    .shop-effect { color: #cfcfb0; font-size: .68rem; margin-top: 3px }
 
     .shop-toggle {
-      position: fixed;
-      right: 12px;
-      top: 52px;
-      z-index: 12;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, #dbb42c, #a67c1e);
-      border: 2px solid #ffd966;
-      color: #1e2a0e;
-      font-size: 1.3rem;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4);
-      transition: transform .2s, background .2s;
+      position: fixed; right: 12px; top: 52px; z-index: 12; width: 44px; height: 44px;
+      border-radius: 50%; background: linear-gradient(180deg, #dbb42c, #a67c1e); border: 2px solid #ffd966;
+      color: #1e2a0e; font-size: 1.3rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 0 #7a5d0e, 0 0 15px rgba(255, 217, 102, .4); transition: transform .2s, background .2s;
     }
 
-    .shop-toggle:hover {
-      background: linear-gradient(180deg, #ffd966, #dbb42c);
-      transform: scale(1.08)
-    }
+    .shop-toggle:hover { background: linear-gradient(180deg, #ffd966, #dbb42c); transform: scale(1.08) }
+    .shop-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 #7a5d0e }
+    .shop-toggle .icon { transition: transform .3s }
+    .shop-toggle.collapsed .icon { transform: rotate(180deg) }
 
-    .shop-toggle:active {
-      transform: translateY(2px);
-      box-shadow: 0 1px 0 #7a5d0e
-    }
+    .bar { position: fixed; bottom: 12px; left: 12px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap }
+    .btn { background: rgba(20, 40, 25, .92); border: 2px solid #d4af37; color: #ffd966; padding: 10px 16px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: .85rem; transition: .15s }
+    .btn:hover { background: #2a4a30 }
+    .btn:active { transform: translateY(2px) }
+    .btn.primary { background: linear-gradient(180deg, #dbb42c, #a67c1e); color: #1e2a0e; border-color: #ffd966; box-shadow: 0 3px 0 #7a5d0e }
+    .btn.primary:active { transform: translateY(4px); box-shadow: 0 0 0 #7a5d0e }
+    .btn.danger { background: linear-gradient(180deg, #c0392b, #8b1e0e); color: #fff; border-color: #e74c3c; box-shadow: 0 3px 0 #5a0e05 }
+    .btn.danger:active { transform: translateY(4px); box-shadow: 0 0 0 #5a0e05 }
+    .btn:disabled { opacity: .5; cursor: wait }
 
-    .shop-toggle .icon {
-      transition: transform .3s
-    }
+    .banner { position: fixed; top: 90px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 35, .96); border: 2px solid #ffd966; color: #ffeaac; padding: 10px 24px; border-radius: 30px; font-weight: bold; z-index: 11; display: none; text-align: center; max-width: 90%; font-size: .85rem }
+    .banner small { display: block; color: #b8d9a8; font-weight: normal; margin-top: 2px; font-size: .75rem }
+    .banner.demolish { background: rgba(80, 20, 20, .96); border-color: #e74c3c; color: #ffcccc }
+    .banner.demolish small { color: #ff9999 }
 
-    .shop-toggle.collapsed .icon {
-      transform: rotate(180deg)
-    }
+    .modal { position: fixed; inset: 0; background: rgba(0, 0, 0, .85); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px }
+    .modal-c { background: #274427; border: 4px solid #d4af37; border-radius: 32px; padding: 26px 22px; max-width: 460px; width: 100%; text-align: center; color: #f9f1d2 }
+    .modal-c h3 { font-size: 1.8rem; color: #ffd966; margin-bottom: 12px }
+    .blog { background: #1a2e1a; border-radius: 16px; padding: 12px; text-align: left; font-family: monospace; max-height: 220px; overflow-y: auto; margin: 12px 0; font-size: .88rem; line-height: 1.5 }
+    .mbtn { background: #dbb42c; border: none; border-radius: 40px; padding: 12px 28px; font-weight: bold; font-size: 1rem; color: #1e2a0e; cursor: pointer; box-shadow: 0 4px 0 #8b6914; margin: 4px }
+    .mbtn:active { transform: translateY(3px); box-shadow: 0 0 0 #8b6914 }
 
-    .bar {
-      position: fixed;
-      bottom: 12px;
-      left: 12px;
-      display: flex;
-      gap: 8px;
-      z-index: 10;
-      flex-wrap: wrap
-    }
+    .log { position: fixed; bottom: 70px; left: 12px; width: 300px; max-height: 110px; overflow-y: auto; z-index: 9; background: rgba(10, 25, 15, .85); border: 1px solid #6b8c5c; border-radius: 12px; padding: 8px 12px; font-family: monospace; font-size: .72rem; color: #bbd9a8; pointer-events: none }
+    .log div { margin-bottom: 2px }
 
-    .btn {
-      background: rgba(20, 40, 25, .92);
-      border: 2px solid #d4af37;
-      color: #ffd966;
-      padding: 10px 16px;
-      border-radius: 30px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: .85rem;
-      transition: .15s
-    }
+    .zoom-ind { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: rgba(20, 40, 25, .9); border: 1px solid #d4af37; color: #ffd966; padding: 6px 12px; border-radius: 20px; font-size: .75rem; z-index: 10; font-weight: bold }
+    .help { position: fixed; top: 90px; left: 12px; background: rgba(15, 32, 20, .94); border: 2px solid #6b8c5c; border-radius: 14px; padding: 10px 14px; color: #bbd9a8; font-size: .72rem; z-index: 9; max-width: 230px; line-height: 1.5; pointer-events: none; transition: opacity .4s }
+    .help b { color: #ffd966 }
+    .help.hidden { opacity: 0 }
 
-    .btn:hover {
-      background: #2a4a30
-    }
-
-    .btn:active {
-      transform: translateY(2px)
-    }
-
-    .btn.primary {
-      background: linear-gradient(180deg, #dbb42c, #a67c1e);
-      color: #1e2a0e;
-      border-color: #ffd966;
-      box-shadow: 0 3px 0 #7a5d0e
-    }
-
-    .btn.primary:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 #7a5d0e
-    }
-
-    .btn.danger {
-      background: linear-gradient(180deg, #c0392b, #8b1e0e);
-      color: #fff;
-      border-color: #e74c3c;
-      box-shadow: 0 3px 0 #5a0e05
-    }
-
-    .btn.danger:active {
-      transform: translateY(4px);
-      box-shadow: 0 0 0 #5a0e05
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: wait
-    }
-
-    .banner {
-      position: fixed;
-      top: 90px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(30, 60, 35, .96);
-      border: 2px solid #ffd966;
-      color: #ffeaac;
-      padding: 10px 24px;
-      border-radius: 30px;
-      font-weight: bold;
-      z-index: 11;
-      display: none;
-      text-align: center;
-      max-width: 90%;
-      font-size: .85rem
-    }
-
-    .banner small {
-      display: block;
-      color: #b8d9a8;
-      font-weight: normal;
-      margin-top: 2px;
-      font-size: .75rem
-    }
-
-    .banner.demolish {
-      background: rgba(80, 20, 20, .96);
-      border-color: #e74c3c;
-      color: #ffcccc
-    }
-
-    .banner.demolish small {
-      color: #ff9999
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .85);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      padding: 20px
-    }
-
-    .modal-c {
-      background: #274427;
-      border: 4px solid #d4af37;
-      border-radius: 32px;
-      padding: 26px 22px;
-      max-width: 460px;
-      width: 100%;
-      text-align: center;
-      color: #f9f1d2
-    }
-
-    .modal-c h3 {
-      font-size: 1.8rem;
-      color: #ffd966;
-      margin-bottom: 12px
-    }
-
-    .blog {
-      background: #1a2e1a;
-      border-radius: 16px;
-      padding: 12px;
-      text-align: left;
-      font-family: monospace;
-      max-height: 220px;
-      overflow-y: auto;
-      margin: 12px 0;
-      font-size: .88rem;
-      line-height: 1.5
-    }
-
-    .mbtn {
-      background: #dbb42c;
-      border: none;
-      border-radius: 40px;
-      padding: 12px 28px;
-      font-weight: bold;
-      font-size: 1rem;
-      color: #1e2a0e;
-      cursor: pointer;
-      box-shadow: 0 4px 0 #8b6914;
-      margin: 4px
-    }
-
-    .mbtn:active {
-      transform: translateY(3px);
-      box-shadow: 0 0 0 #8b6914
-    }
-
-    .log {
-      position: fixed;
-      bottom: 70px;
-      left: 12px;
-      width: 300px;
-      max-height: 110px;
-      overflow-y: auto;
-      z-index: 9;
-      background: rgba(10, 25, 15, .85);
-      border: 1px solid #6b8c5c;
-      border-radius: 12px;
-      padding: 8px 12px;
-      font-family: monospace;
-      font-size: .72rem;
-      color: #bbd9a8;
-      pointer-events: none
-    }
-
-    .log div {
-      margin-bottom: 2px
-    }
-
-    .zoom-ind {
-      position: fixed;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(20, 40, 25, .9);
-      border: 1px solid #d4af37;
-      color: #ffd966;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: .75rem;
-      z-index: 10;
-      font-weight: bold
-    }
-
-    .help {
-      position: fixed;
-      top: 90px;
-      left: 12px;
-      background: rgba(15, 32, 20, .94);
-      border: 2px solid #6b8c5c;
-      border-radius: 14px;
-      padding: 10px 14px;
-      color: #bbd9a8;
-      font-size: .72rem;
-      z-index: 9;
-      max-width: 230px;
-      line-height: 1.5;
-      pointer-events: none;
-      transition: opacity .4s
-    }
-
-    .help b {
-      color: #ffd966
-    }
-
-    .help.hidden {
-      opacity: 0
-    }
-
-    .forest-badge {
-      position: fixed;
-      top: 52px;
-      left: 12px;
-      z-index: 10;
-      background: rgba(15, 32, 20, .92);
-      border: 2px solid #6b8c5c;
-      border-radius: 30px;
-      padding: 6px 14px;
-      color: #bbd9a8;
-      font-size: .72rem;
-      font-weight: bold;
-      pointer-events: none;
-      transition: border-color .3s;
-    }
-
-    .forest-badge.growing {
-      border-color: #8bc34a;
-      box-shadow: 0 0 10px rgba(139, 195, 74, .4)
-    }
-
-    .forest-badge b {
-      color: #8bc34a
-    }
+    .forest-badge { position: fixed; top: 52px; left: 12px; z-index: 10; background: rgba(15, 32, 20, .92); border: 2px solid #6b8c5c; border-radius: 30px; padding: 6px 14px; color: #bbd9a8; font-size: .72rem; font-weight: bold; pointer-events: none; transition: border-color .3s; }
+    .forest-badge.growing { border-color: #8bc34a; box-shadow: 0 0 10px rgba(139, 195, 74, .4) }
+    .forest-badge b { color: #8bc34a }
 
     @media(max-width:720px) {
-      .shop {
-        width: 170px;
-        top: 120px
-      }
-
-      .shop h3 {
-        font-size: .85rem
-      }
-
-      .shop-effect {
-        display: none
-      }
-
-      .log {
-        width: 170px;
-        font-size: .6rem
-      }
-
-      .shop-icon {
-        width: 32px;
-        height: 32px;
-        font-size: 1.2rem
-      }
-
-      .res-item {
-        font-size: .7rem
-      }
-
-      .res-item span {
-        min-width: 44px;
-        padding: 2px 8px
-      }
-
-      .help {
-        max-width: 160px;
-        font-size: .62rem
-      }
-
-      .shop-toggle {
-        width: 40px;
-        height: 40px;
-        font-size: 1.1rem;
-        top: 56px
-      }
-
-      .bar .btn {
-        padding: 8px 12px;
-        font-size: .75rem
-      }
-
-      .forest-badge {
-        top: 56px;
-        font-size: .62rem;
-        padding: 4px 10px
-      }
+      .shop { width: 170px; top: 120px }
+      .shop h3 { font-size: .85rem }
+      .shop-effect { display: none }
+      .log { width: 170px; font-size: .6rem }
+      .shop-icon { width: 32px; height: 32px; font-size: 1.2rem }
+      .res-item { font-size: .7rem }
+      .res-item span { min-width: 44px; padding: 2px 8px }
+      .help { max-width: 160px; font-size: .62rem }
+      .shop-toggle { width: 40px; height: 40px; font-size: 1.1rem; top: 56px }
+      .bar .btn { padding: 8px 12px; font-size: .75rem }
+      .forest-badge { top: 56px; font-size: .62rem; padding: 4px 10px }
     }
   </style>
 </head>
@@ -541,8 +153,7 @@
     <div class="rank-badge" id="rank">🏆 Ранг 1: Новобранец</div>
   </div>
 
-  <div class="forest-badge" id="forestBadge">🌲 Лес: <b id="treeCount">0</b> /
-    <span id="treeMax">0</span></div>
+  <div class="forest-badge" id="forestBadge">🌲 Лес: <b id="treeCount">0</b> / <span id="treeMax">0</span></div>
 
   <div class="help" id="help">
     <b>Управление:</b><br>
@@ -551,7 +162,6 @@
     🖲️ Колесо — зум<br>
     👆 1 палец — панорама<br>
     ✌️ 2 пальца — зум<br>
-    🌲 Лес растёт сам!<br>
     <span style="opacity:.7">(скроется через 8с)</span>
   </div>
 
@@ -586,20 +196,28 @@
     </div>
   </div>
 
-  <script>
+  <!-- Firebase Подключение и Игра -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove, onDisconnect, get, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+    // Ваши ключи Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvr3N350SeY-UImZfqxvRQbte6lhLeA7g",
+      authDomain: "kingdom-online-ef88b.firebaseapp.com",
+      databaseURL: "https://kingdom-online-ef88b-default-rtdb.firebaseio.com",
+      projectId: "kingdom-online-ef88b",
+      storageBucket: "kingdom-online-ef88b.firebasestorage.app",
+      messagingSenderId: "433616971461",
+      appId: "1:433616971461:web:5594746f972dcc294932ac"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const myPlayerId = 'player_' + Math.random().toString(36).substr(2, 9);
+    
     (function() {
       'use strict';
-
-      // ============ НАСТРОЙКА ОНЛАЙНА ============
-      // Вставьте сюда ссылку, которую выдаст Render после создания сервера!
-      const SERVER_URL = 'https://ВАШ-СЕРВЕР.onrender.com'; 
-      
-      var socket = null;
-      try {
-          if (typeof io !== 'undefined') {
-              socket = io(SERVER_URL, { autoConnect: false });
-          }
-      } catch(e) { console.log('Ошибка подключения к серверу:', e); }
 
       // ============ КОНСТАНТЫ ============
       var RANKS = [
@@ -631,25 +249,14 @@
       var WOOD_PER_CHOP = 5;
       var ARRIVE_DIST = 16;
 
-      var TREE_INITIAL = 200;
-      var TREE_MIN = 80;
-      var TREE_MAX = 900;
-      var TREE_GROW_BASE = 0.5;
-      var TREE_GROW_PER_SEC = 0.006;
-      var TREE_GROW_MAX = 4.5;
-      var treeGrowTimer = 0;
-      var gameTime = 0;
+      var TREE_INITIAL = 200, TREE_MIN = 80, TREE_MAX = 900;
+      var TREE_GROW_BASE = 0.5, TREE_GROW_PER_SEC = 0.006, TREE_GROW_MAX = 4.5;
+      var treeGrowTimer = 0, gameTime = 0;
 
-      var state = {
-        gold: 150, wood: 80, army: 10, wins: 0, rankIndex: 0, buildings: [], lastTick: Date.now()
-      };
-
+      var state = { gold: 150, wood: 80, army: 10, wins: 0, rankIndex: 0, buildings: [], lastTick: Date.now() };
       var cam = { x: COLS * GS / 2, y: ROWS * GS / 2, zoom: 0.7, minZoom: 0.15, maxZoom: 3.0 };
-      var placing = null;
-      var demolishMode = false;
-      var mouse = { x: 0, y: 0, inside: false };
-      var trees = [];
-      var TREE_TYPES = [
+      var placing = null, demolishMode = false, mouse = { x: 0, y: 0, inside: false };
+      var trees = [], TREE_TYPES = [
         { name: 'oak', color1: '#2d5016', color2: '#4a7a2e', trunk: '#5c3a1f' },
         { name: 'pine', color1: '#1a4010', color2: '#2d6b1e', trunk: '#4a2e15' },
         { name: 'birch', color1: '#5a8a3a', color2: '#7fb84a', trunk: '#d4c4a8' }
@@ -659,41 +266,50 @@
       var CITIZEN_COLORS = ['#f5cba7', '#e8b88a', '#d4a373', '#c9a17a', '#b8865f'];
       var CITIZEN_SHIRTS = ['#c0392b', '#2980b9', '#27ae60', '#8e44ad', '#d35400', '#f39c12', '#16a085', '#e74c3c'];
 
-      // ============ ЛОГИКА ОНЛАЙН-БОЯ ============
+      // ============ ЛОГИКА ОНЛАЙН-БОЯ FIREBASE ============
       function findOpponent() {
         var btn = document.getElementById('findBtn');
-        if (!socket || (!socket.connected && !socket.active)) {
-            socket.connect(); // Пытаемся подключиться
-        }
-        
         btn.disabled = true;
-        btn.textContent = '🔎 Поиск...';
+        btn.textContent = '🔎 Поиск в сети...';
+        addLog('Поиск реального игрока...');
+
+        var playersRef = ref(db, 'matchmaking');
         
-        if (socket) {
-            socket.emit('findMatch', { army: state.army, defense: calcDefense() });
-        } else {
-            alert('Ошибка: сервер онлайна недоступен. Проверьте SERVER_URL в коде.');
+        // Подключаемся к очереди и слушаем изменения
+        onValue(playersRef, function(snapshot) {
+          var players = snapshot.val();
+          
+          if (!players) {
+            // Очередь пуста, добавляем себя
+            var myRef = ref(db, 'matchmaking/' + myPlayerId);
+            set(myRef, { army: state.army, defense: calcDefense() });
+            onDisconnect(myRef).remove(); // Если выйдем - удалимся из очереди
+            return;
+          }
+
+          // Проверяем, есть ли кто-то кроме нас
+          var opponentIds = Object.keys(players).filter(function(id) { return id !== myPlayerId; });
+
+          if (opponentIds.length > 0) {
+            // Нашли соперника!
+            var oppId = opponentIds[0];
+            var oppData = players[oppId];
+
+            // Удаляем себя и его из очереди
+            remove(ref(db, 'matchmaking/' + myPlayerId));
+            remove(ref(db, 'matchmaking/' + oppId));
+            off(playersRef); // Отписываемся от поиска
+
             btn.disabled = false;
             btn.textContent = '⚔️ Бой';
-        }
-      }
-
-      if (socket) {
-        socket.on('waiting', function(msg) {
-            document.getElementById('findBtn').textContent = '⏳ ' + msg;
-        });
-
-        socket.on('matchFound', function(data) {
-            document.getElementById('findBtn').disabled = false;
-            document.getElementById('findBtn').textContent = '⚔️ Бой';
-            startRealBattle(data.opponent);
-        });
-
-        socket.on('connect_error', function() {
-            var btn = document.getElementById('findBtn');
-            btn.disabled = false;
-            btn.textContent = '⚔️ Бой';
-            addLog('❌ Ошибка подключения к серверу');
+            addLog('✅ Соперник найден!');
+            startRealBattle(oppData);
+          } else {
+            // Мы в очереди, но больше никого нет. Убеждаемся что мы точно там
+            var myRef = ref(db, 'matchmaking/' + myPlayerId);
+            set(myRef, { army: state.army, defense: calcDefense() });
+            onDisconnect(myRef).remove();
+          }
         });
       }
 
@@ -712,11 +328,10 @@
         var enemyArmy = opponent.army;
         var enemyDef = opponent.defense;
 
-        // Формула расчета (такая же для обоих)
         var pp = playerArmy * (1 + playerDef * 0.02) + (Math.random() * 5);
         var ep = enemyArmy * (1 + enemyDef * 0.02) + (Math.random() * 5);
-        
         var win = pp > ep;
+
         var log = '⚔️ Против: Живой Игрок<br>';
         log += '🛡️ Ты: ' + Math.floor(playerArmy) + ' (+защ ' + playerDef + ')<br>';
         log += '🛡️ Враг: ' + Math.floor(enemyArmy) + ' (+защ ' + enemyDef + ')<br>';
@@ -726,8 +341,7 @@
           var gr = 30 + Math.floor(enemyArmy * 1.2);
           var wr = 15 + Math.floor(enemyArmy * 0.8);
           var loss = Math.floor(playerArmy * 0.15);
-          state.gold += gr;
-          state.wood += wr;
+          state.gold += gr; state.wood += wr;
           state.army = Math.max(5, playerArmy - loss);
           state.wins++;
           log += '🎉 ПОБЕДА!<br>+' + gr + '💰 +' + wr + '🪵<br>-' + loss + ' армии';
@@ -740,16 +354,15 @@
           log += '💀 ПОРАЖЕНИЕ<br>-' + loss + ' армии, -20💰 -15🪵';
           addLog('❌ Поражение от Живого Игрока');
         }
-        checkRank();
-        save();
-        updateHUD();
-        renderShop();
+        checkRank(); save(); updateHUD(); renderShop();
         document.getElementById('mtitle').textContent = win ? '🏆 Победа!' : '💔 Поражение';
         document.getElementById('mcontent').innerHTML = '<div class="blog">' + log + '</div>';
         document.getElementById('modal').style.display = 'flex';
       }
 
-      // ============ ГЕНЕРАЦИЯ / РОСТ ДЕРЕВЬЕВ ============
+      // ============ ОСТАЛЬНАЯ ИГРА (Деревья, Жители, Рисование, UI) ============
+      // (Функции ниже без изменений, взяты из вашей рабочей версии)
+      
       function makeTreeAt(gx, gy) {
         if (gx < 0 || gx >= COLS || gy < 0 || gy >= ROWS) return false;
         if (anyOcc(gx, gy, 1)) return false;
@@ -757,21 +370,12 @@
           if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return false;
         }
         var type = Math.floor(Math.random() * TREE_TYPES.length);
-        trees.push({
-          gx: gx, gy: gy,
-          x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
-          y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
-          size: 0.55 + Math.random() * 0.5,
-          phase: Math.random() * Math.PI * 2,
-          sway: 0.5 + Math.random() * 0.5,
-          type: type, hp: 3, chopPhase: 0, choppedBy: null, age: 0, growDur: 2 + Math.random() * 2
-        });
+        trees.push({ gx: gx, gy: gy, x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, size: 0.55 + Math.random() * 0.5, phase: Math.random() * Math.PI * 2, sway: 0.5 + Math.random() * 0.5, type: type, hp: 3, chopPhase: 0, choppedBy: null, age: 0, growDur: 2 + Math.random() * 2 });
         return true;
       }
 
       function generateTrees() {
-        trees = [];
-        var target = TREE_INITIAL, attempts = 0;
+        trees = []; var target = TREE_INITIAL, attempts = 0;
         while (trees.length < target && attempts < 8000) {
           attempts++;
           var gx = Math.floor(Math.random() * COLS), gy = Math.floor(Math.random() * ROWS);
@@ -779,20 +383,10 @@
           if (dCenter < 3) continue;
           if (anyOcc(gx, gy, 1)) continue;
           var blocked = false;
-          for (var i = 0; i < trees.length; i++) {
-            if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) { blocked = true; break; }
-          }
+          for (var i = 0; i < trees.length; i++) { if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) { blocked = true; break; } }
           if (blocked) continue;
           var type = Math.floor(Math.random() * TREE_TYPES.length);
-          trees.push({
-            gx: gx, gy: gy,
-            x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
-            y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6,
-            size: 0.75 + Math.random() * 0.6,
-            phase: Math.random() * Math.PI * 2,
-            sway: 0.5 + Math.random() * 0.5,
-            type: type, hp: 3, chopPhase: 0, choppedBy: null, age: 99, growDur: 0
-          });
+          trees.push({ gx: gx, gy: gy, x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.6, size: 0.75 + Math.random() * 0.6, phase: Math.random() * Math.PI * 2, sway: 0.5 + Math.random() * 0.5, type: type, hp: 3, chopPhase: 0, choppedBy: null, age: 99, growDur: 0 });
         }
       }
 
@@ -805,89 +399,41 @@
         return false;
       }
 
-      function currentGrowRate() {
-        var rate = TREE_GROW_BASE + gameTime * TREE_GROW_PER_SEC;
-        return Math.min(rate, TREE_GROW_MAX);
-      }
+      function currentGrowRate() { var rate = TREE_GROW_BASE + gameTime * TREE_GROW_PER_SEC; return Math.min(rate, TREE_GROW_MAX); }
 
       function updateForest(dt) {
         gameTime += dt;
-        for (var i = 0; i < trees.length; i++) {
-          var t = trees[i];
-          if (t.age < t.growDur) t.age += dt;
-        }
-        var rate = currentGrowRate();
-        treeGrowTimer += rate * dt;
-        while (treeGrowTimer >= 1) {
-          treeGrowTimer -= 1;
-          growOneTree();
-        }
-        if (trees.length < TREE_MIN) {
-          var toGrow = Math.min(TREE_MIN - trees.length, 3);
-          for (var k = 0; k < toGrow; k++) growOneTree();
-        }
+        for (var i = 0; i < trees.length; i++) { var t = trees[i]; if (t.age < t.growDur) t.age += dt; }
+        var rate = currentGrowRate(); treeGrowTimer += rate * dt;
+        while (treeGrowTimer >= 1) { treeGrowTimer -= 1; growOneTree(); }
+        if (trees.length < TREE_MIN) { var toGrow = Math.min(TREE_MIN - trees.length, 3); for (var k = 0; k < toGrow; k++) growOneTree(); }
       }
 
       function updateForestHUD() {
-        var elCount = document.getElementById('treeCount');
-        var elMax = document.getElementById('treeMax');
-        var badge = document.getElementById('forestBadge');
+        var elCount = document.getElementById('treeCount'), elMax = document.getElementById('treeMax'), badge = document.getElementById('forestBadge');
         if (!elCount) return;
-        elCount.textContent = trees.length;
-        elMax.textContent = TREE_MAX;
-        var rate = currentGrowRate();
-        if (rate > TREE_GROW_BASE + 0.2) badge.classList.add('growing');
-        else badge.classList.remove('growing');
+        elCount.textContent = trees.length; elMax.textContent = TREE_MAX;
+        if (currentGrowRate() > TREE_GROW_BASE + 0.2) badge.classList.add('growing'); else badge.classList.remove('growing');
       }
 
-      // ============ ГЕОМЕТРИЯ ============
       function w2s(wx, wy) { return { x: (wx - cam.x) * cam.zoom + cv.width / 2, y: (wy - cam.y) * cam.zoom + cv.height / 2 }; }
       function s2w(sx, sy) { return { x: (sx - cv.width / 2) / cam.zoom + cam.x, y: (sy - cv.height / 2) / cam.zoom + cam.y }; }
       function s2g(sx, sy) { var w = s2w(sx, sy); return { gx: Math.floor(w.x / GS), gy: Math.floor(w.y / GS) }; }
       function resize() { cv.width = innerWidth; cv.height = innerHeight; }
       addEventListener('resize', resize); resize();
-
       function curRank() { return RANKS[Math.min(state.rankIndex, RANKS.length - 1)]; }
       function unlocked(t) { return curRank().str.indexOf(t) >= 0; }
 
       function occupied(gx, gy) {
-        for (var i = 0; i < state.buildings.length; i++) {
-          var b = state.buildings[i], s = S[b.type].size;
-          if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s) return true;
-        }
+        for (var i = 0; i < state.buildings.length; i++) { var b = state.buildings[i], s = S[b.type].size; if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s) return true; }
         return false;
       }
+      function anyOcc(gx, gy, size) { for (var x = gx; x < gx + size; x++) for (var y = gy; y < gy + size; y++) if (occupied(x, y)) return true; return false; }
+      function treeAtIndex(gx, gy) { for (var i = 0; i < trees.length; i++) { if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return i; } return -1; }
+      function buildingAt(gx, gy) { for (var i = 0; i < state.buildings.length; i++) { var b = state.buildings[i], s = S[b.type].size; if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s) return b; } return null; }
 
-      function anyOcc(gx, gy, size) {
-        for (var x = gx; x < gx + size; x++)
-          for (var y = gy; y < gy + size; y++)
-            if (occupied(x, y)) return true;
-        return false;
-      }
-
-      function treeAtIndex(gx, gy) {
-        for (var i = 0; i < trees.length; i++) {
-          if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return i;
-        }
-        return -1;
-      }
-
-      function buildingAt(gx, gy) {
-        for (var i = 0; i < state.buildings.length; i++) {
-          var b = state.buildings[i], s = S[b.type].size;
-          if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s) return b;
-        }
-        return null;
-      }
-
-      // ============ СОХРАНЕНИЕ ============
       function save() {
-        try {
-          localStorage.setItem('kr19', JSON.stringify({
-            gold: state.gold, wood: state.wood, army: state.army, wins: state.wins, rankIndex: state.rankIndex,
-            buildings: state.buildings, gameTime: gameTime, shopCollapsed: document.getElementById('shop').classList.contains('collapsed')
-          }));
-        } catch (e) {}
+        try { localStorage.setItem('kr19', JSON.stringify({ gold: state.gold, wood: state.wood, army: state.army, wins: state.wins, rankIndex: state.rankIndex, buildings: state.buildings, gameTime: gameTime, shopCollapsed: document.getElementById('shop').classList.contains('collapsed') })); } catch (e) {}
       }
 
       function load() {
@@ -905,11 +451,8 @@
       }
 
       function addLog(msg) {
-        var l = document.getElementById('log');
-        var t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        var d = document.createElement('div');
-        d.textContent = '[' + t + '] ' + msg;
-        l.appendChild(d);
+        var l = document.getElementById('log'), t = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }), d = document.createElement('div');
+        d.textContent = '[' + t + '] ' + msg; l.appendChild(d);
         while (l.children.length > 30) l.removeChild(l.firstChild);
         l.scrollTop = l.scrollHeight;
       }
@@ -919,8 +462,7 @@
         document.getElementById('wood').textContent = Math.floor(state.wood);
         document.getElementById('army').textContent = Math.floor(state.army);
         document.getElementById('pop').textContent = citizens.length;
-        var lumberjacks = citizens.filter(function(c) { return c.role === 'lumberjack'; }).length;
-        document.getElementById('lumberCount').textContent = lumberjacks;
+        document.getElementById('lumberCount').textContent = citizens.filter(function(c) { return c.role === 'lumberjack'; }).length;
         document.getElementById('rank').textContent = '🏆 Ранг ' + (state.rankIndex + 1) + ': ' + curRank().name;
         document.getElementById('zoomInd').textContent = '🔍 ' + Math.round(cam.zoom * 100) + '%';
         updateForestHUD();
@@ -929,14 +471,9 @@
       var shopCollapsed = false;
       function setShopCollapsed(collapsed, animate) {
         shopCollapsed = collapsed;
-        var shop = document.getElementById('shop');
-        var toggle = document.getElementById('shopToggle');
-        var icon = toggle.querySelector('.icon');
-        if (collapsed) {
-          shop.classList.add('collapsed'); toggle.classList.add('collapsed'); icon.textContent = '◀'; document.body.classList.remove('shop-open');
-        } else {
-          shop.classList.remove('collapsed'); toggle.classList.remove('collapsed'); icon.textContent = '▶'; document.body.classList.add('shop-open');
-        }
+        var shop = document.getElementById('shop'), toggle = document.getElementById('shopToggle'), icon = toggle.querySelector('.icon');
+        if (collapsed) { shop.classList.add('collapsed'); toggle.classList.add('collapsed'); icon.textContent = '◀'; document.body.classList.remove('shop-open'); }
+        else { shop.classList.remove('collapsed'); toggle.classList.remove('collapsed'); icon.textContent = '▶'; document.body.classList.add('shop-open'); }
         if (animate !== false) save();
       }
 
@@ -946,20 +483,11 @@
         role = role || 'wander';
         if (citizens.length >= MAX_CITIZENS) {
           if (role === 'lumberjack') {
-            var wi = -1;
-            for (var i = 0; i < citizens.length; i++) if (citizens[i].role === 'wander') { wi = i; break; }
+            var wi = -1; for (var i = 0; i < citizens.length; i++) if (citizens[i].role === 'wander') { wi = i; break; }
             if (wi >= 0) citizens.splice(wi, 1); else return null;
           } else return null;
         }
-        var c = {
-          x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5,
-          y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5,
-          tx: gx * GS + GS / 2, ty: gy * GS + GS / 2,
-          speed: 90 + Math.random() * 40, skin: CITIZEN_COLORS[(Math.random() * CITIZEN_COLORS.length) | 0],
-          shirt: CITIZEN_SHIRTS[(Math.random() * CITIZEN_SHIRTS.length) | 0],
-          phase: Math.random() * Math.PI * 2, homeId: homeId, dir: 1, pauseTimer: 0, role: role,
-          targetTree: null, choppingTimer: 0, carrying: false, stuckTimer: 0, lastX: 0, lastY: 0, retargetTimer: 0
-        };
+        var c = { x: gx * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5, y: gy * GS + GS / 2 + (Math.random() - 0.5) * GS * 0.5, tx: gx * GS + GS / 2, ty: gy * GS + GS / 2, speed: 90 + Math.random() * 40, skin: CITIZEN_COLORS[(Math.random() * CITIZEN_COLORS.length) | 0], shirt: CITIZEN_SHIRTS[(Math.random() * CITIZEN_SHIRTS.length) | 0], phase: Math.random() * Math.PI * 2, homeId: homeId, dir: 1, pauseTimer: 0, role: role, targetTree: null, choppingTimer: 0, carrying: false, stuckTimer: 0, lastX: 0, lastY: 0, retargetTimer: 0 };
         if (c.role === 'lumberjack') { c.lastX = c.x; c.lastY = c.y; findNearestTree(c); } else pickWanderTarget(c);
         citizens.push(c); return c;
       }
@@ -967,18 +495,13 @@
       function findNearestTree(c) {
         if (trees.length === 0) { c.targetTree = null; c.tx = c.x; c.ty = c.y; return false; }
         var best = null, bestD = Infinity;
-        for (var i = 0; i < trees.length; i++) {
-          var t = trees[i]; if (t.hp <= 0) continue;
-          var dx = t.x - c.x, dy = t.y - c.y, d = dx * dx + dy * dy;
-          if (d < bestD) { bestD = d; best = t; }
-        }
+        for (var i = 0; i < trees.length; i++) { var t = trees[i]; if (t.hp <= 0) continue; var dx = t.x - c.x, dy = t.y - c.y, d = dx * dx + dy * dy; if (d < bestD) { bestD = d; best = t; } }
         if (best) { c.targetTree = best; c.tx = best.x; c.ty = best.y; c.choppingTimer = 0; return true; }
         c.targetTree = null; return false;
       }
 
       function pickWanderTarget(c) {
-        c.tx = GS * 1.5 + Math.random() * (COLS * GS - GS * 3);
-        c.ty = GS * 1.5 + Math.random() * (ROWS * GS - GS * 3);
+        c.tx = GS * 1.5 + Math.random() * (COLS * GS - GS * 3); c.ty = GS * 1.5 + Math.random() * (ROWS * GS - GS * 3);
         c.targetTree = null; c.pauseTimer = 0.4 + Math.random() * 1.4; c.lastX = c.x; c.lastY = c.y; c.stuckTimer = 0;
       }
 
@@ -992,30 +515,18 @@
             if (c.choppingTimer <= 0) {
               if (c.targetTree && c.targetTree.hp > 0) {
                 c.targetTree.hp--; state.wood += WOOD_PER_CHOP; c.carrying = true;
-                if (c.targetTree.hp <= 0) {
-                  var idx = trees.indexOf(c.targetTree); if (idx >= 0) trees.splice(idx, 1);
-                  c.targetTree = null; c.carrying = false;
-                }
+                if (c.targetTree.hp <= 0) { var idx = trees.indexOf(c.targetTree); if (idx >= 0) trees.splice(idx, 1); c.targetTree = null; c.carrying = false; }
               }
               c.choppingTimer = 0;
-              if (c.role === 'lumberjack') {
-                if (!findNearestTree(c)) { pickWanderTarget(c); c.pauseTimer = 2 + Math.random() * 3; }
-              }
+              if (c.role === 'lumberjack') { if (!findNearestTree(c)) { pickWanderTarget(c); c.pauseTimer = 2 + Math.random() * 3; } }
             }
             continue;
           }
-          if (c.pauseTimer > 0) {
-            c.pauseTimer -= dt; c.phase += dt * 1.5;
-            if (c.pauseTimer < 0) c.pauseTimer = 0;
-            continue;
-          }
+          if (c.pauseTimer > 0) { c.pauseTimer -= dt; c.phase += dt * 1.5; if (c.pauseTimer < 0) c.pauseTimer = 0; continue; }
           if (c.role === 'lumberjack') {
             if (!c.targetTree || c.targetTree.hp <= 0) {
               c.retargetTimer += dt;
-              if (c.retargetTimer >= 0.4) {
-                c.retargetTimer = 0;
-                if (!findNearestTree(c)) { pickWanderTarget(c); c.pauseTimer = 2 + Math.random() * 3; }
-              }
+              if (c.retargetTimer >= 0.4) { c.retargetTimer = 0; if (!findNearestTree(c)) { pickWanderTarget(c); c.pauseTimer = 2 + Math.random() * 3; } }
             } else { c.retargetTimer = 0; c.tx = c.targetTree.x; c.ty = c.targetTree.y; }
           }
           var dx = c.tx - c.x, dy = c.ty - c.y, d = Math.sqrt(dx * dx + dy * dy);
@@ -1027,15 +538,11 @@
           var step = Math.min(c.speed * dt, d);
           c.x += (dx / d) * step; c.y += (dy / d) * step;
           if (dx !== 0) c.dir = dx >= 0 ? 1 : -1;
-          c.phase += dt * 9;
-          if (c.carrying) c.carrying = false;
-
+          c.phase += dt * 9; if (c.carrying) c.carrying = false;
           c.stuckTimer += dt;
           if (c.stuckTimer > 1.5) {
             var moved = Math.abs(c.x - c.lastX) + Math.abs(c.y - c.lastY);
-            if (moved < 12) {
-              if (c.role === 'lumberjack') { if (!findNearestTree(c)) pickWanderTarget(c); } else pickWanderTarget(c);
-            }
+            if (moved < 12) { if (c.role === 'lumberjack') { if (!findNearestTree(c)) pickWanderTarget(c); } else pickWanderTarget(c); }
             c.lastX = c.x; c.lastY = c.y; c.stuckTimer = 0;
           }
         }
@@ -1051,64 +558,45 @@
         var def = TREE_TYPES[t.type];
         var shake = 0;
         if (t.chopPhase > 0) { t.chopPhase -= 0.5; shake = Math.sin(t.chopPhase * 30) * 2 * z; }
-        ctx.save();
-        ctx.globalAlpha = 0.5 + 0.5 * grown;
-        ctx.translate(p.x + shake, p.y);
-        ctx.fillStyle = 'rgba(0,0,0,0.28)';
-        ctx.beginPath(); ctx.ellipse(0, sz * 0.05, sz * 0.35, sz * 0.12, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = def.trunk;
-        ctx.beginPath(); ctx.moveTo(-sz * 0.08, 0); ctx.lineTo(sz * 0.08, 0); ctx.lineTo(sz * 0.05, -sz * 0.5); ctx.lineTo(-sz * 0.05, -sz * 0.5); ctx.closePath(); ctx.fill();
+        ctx.save(); ctx.globalAlpha = 0.5 + 0.5 * grown; ctx.translate(p.x + shake, p.y);
+        ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(0, sz * 0.05, sz * 0.35, sz * 0.12, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = def.trunk; ctx.beginPath(); ctx.moveTo(-sz * 0.08, 0); ctx.lineTo(sz * 0.08, 0); ctx.lineTo(sz * 0.05, -sz * 0.5); ctx.lineTo(-sz * 0.05, -sz * 0.5); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = Math.max(0.5, z); ctx.stroke();
         ctx.translate(0, -sz * 0.55); ctx.rotate(sway);
-        ctx.fillStyle = def.color1;
-        ctx.beginPath(); ctx.arc(-sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = def.color2;
-        ctx.beginPath(); ctx.arc(-sz * 0.1, -sz * 0.15, sz * 0.22, 0, Math.PI * 2); ctx.arc(sz * 0.15, -sz * 0.1, sz * 0.18, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = Math.max(0.5, z);
-        ctx.beginPath(); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = def.color1; ctx.beginPath(); ctx.arc(-sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(sz * 0.2, sz * 0.1, sz * 0.35, 0, Math.PI * 2); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = def.color2; ctx.beginPath(); ctx.arc(-sz * 0.1, -sz * 0.15, sz * 0.22, 0, Math.PI * 2); ctx.arc(sz * 0.15, -sz * 0.1, sz * 0.18, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = Math.max(0.5, z); ctx.beginPath(); ctx.arc(0, -sz * 0.15, sz * 0.42, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
 
       function drawCitizen(c) {
         var p = w2s(c.x, c.y), z = cam.zoom;
         if (p.x < -60 || p.x > cv.width + 60 || p.y < -60 || p.y > cv.height + 60) return;
-        var bob = Math.sin(c.phase) * 1.5 * z;
-        var legSwing = Math.sin(c.phase) * 3 * z;
-        var bodyH = 14 * z, headR = 4 * z;
-        var baseY = p.y + bob;
-        var chopping = c.choppingTimer > 0;
-        var axeSwing = chopping ? Math.sin(c.phase * 3) * 0.9 : 0;
+        var bob = Math.sin(c.phase) * 1.5 * z, legSwing = Math.sin(c.phase) * 3 * z, bodyH = 14 * z, headR = 4 * z;
+        var baseY = p.y + bob, chopping = c.choppingTimer > 0, axeSwing = chopping ? Math.sin(c.phase * 3) * 0.9 : 0;
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.beginPath(); ctx.ellipse(p.x, p.y + bodyH * 0.55, 6 * z, 2.5 * z, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(p.x, p.y + bodyH * 0.55, 6 * z, 2.5 * z, 0, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = Math.max(1, 2 * z); ctx.lineCap = 'round';
         ctx.beginPath(); ctx.moveTo(p.x - 2 * z, baseY + bodyH * 0.15); ctx.lineTo(p.x - 2 * z + legSwing * 0.3, baseY + bodyH * 0.6); ctx.moveTo(p.x + 2 * z, baseY + bodyH * 0.15); ctx.lineTo(p.x + 2 * z - legSwing * 0.3, baseY + bodyH * 0.6); ctx.stroke();
-        ctx.fillStyle = c.shirt;
-        ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6, 2 * z); else ctx.rect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6); ctx.fill();
+        ctx.fillStyle = c.shirt; ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6, 2 * z); else ctx.rect(p.x - 4 * z, baseY - 2 * z, 8 * z, bodyH * 0.6); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1 * z; ctx.stroke();
-        ctx.strokeStyle = c.skin; ctx.lineWidth = Math.max(1, 1.8 * z);
-        var armSwing = Math.sin(c.phase + Math.PI) * 2 * z;
+        ctx.strokeStyle = c.skin; ctx.lineWidth = Math.max(1, 1.8 * z); var armSwing = Math.sin(c.phase + Math.PI) * 2 * z;
         ctx.beginPath(); ctx.moveTo(p.x - 4 * z, baseY); ctx.lineTo(p.x - 6 * z, baseY + bodyH * 0.4 + armSwing); ctx.moveTo(p.x + 4 * z, baseY); if (chopping) ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.2 - axeSwing * 10 * z); else ctx.lineTo(p.x + 6 * z, baseY + bodyH * 0.4 - armSwing); ctx.stroke();
         if (c.role === 'lumberjack') {
           var ax = p.x + 6 * z, ay = baseY + bodyH * 0.2 - (chopping ? axeSwing * 10 * z : armSwing);
-          ctx.strokeStyle = '#8b6914'; ctx.lineWidth = Math.max(1, 1.5 * z);
-          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 3 * z, ay - 4 * z); ctx.stroke();
-          ctx.fillStyle = '#bdc3c7';
-          ctx.beginPath(); ctx.moveTo(ax + 3 * z, ay - 4 * z); ctx.lineTo(ax + 6 * z, ay - 5 * z); ctx.lineTo(ax + 5 * z, ay - 2 * z); ctx.closePath(); ctx.fill();
-          ctx.font = 'bold ' + Math.max(8, 4 * z) + 'px sans-serif'; ctx.textAlign = 'center';
-          ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeText('🪓', p.x, baseY - 9 * z);
+          ctx.strokeStyle = '#8b6914'; ctx.lineWidth = Math.max(1, 1.5 * z); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 3 * z, ay - 4 * z); ctx.stroke();
+          ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.moveTo(ax + 3 * z, ay - 4 * z); ctx.lineTo(ax + 6 * z, ay - 5 * z); ctx.lineTo(ax + 5 * z, ay - 2 * z); ctx.closePath(); ctx.fill();
+          ctx.font = 'bold ' + Math.max(8, 4 * z) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeText('🪓', p.x, baseY - 9 * z);
           ctx.fillStyle = '#ffd966'; ctx.fillText('🪓', p.x, baseY - 9 * z);
           if (chopping && c.targetTree) {
             var w = 20 * z, h = 3 * z, prog = 1 - (c.choppingTimer / CHOP_DURATION);
-            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w, h);
-            ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w * prog, h);
+            ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w, h); ctx.fillStyle = '#8bc34a'; ctx.fillRect(p.x - w / 2, baseY - 16 * z, w * prog, h);
           }
         }
         ctx.fillStyle = c.skin; ctx.beginPath(); ctx.arc(p.x, baseY - 4 * z, headR, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1 * z; ctx.stroke();
         ctx.fillStyle = '#3a2a1a'; ctx.beginPath(); ctx.arc(p.x, baseY - 5.5 * z, headR * 0.95, Math.PI, 0); ctx.fill();
-        var eyeOff = c.dir * 1.2 * z;
-        ctx.fillStyle = '#000';
+        var eyeOff = c.dir * 1.2 * z; ctx.fillStyle = '#000';
         ctx.beginPath(); ctx.arc(p.x - 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI * 2); ctx.arc(p.x + 1.3 * z + eyeOff, baseY - 4 * z, 0.7 * z, 0, Math.PI * 2); ctx.fill();
         if (c.carrying && !chopping) {
           ctx.fillStyle = '#8b6914'; ctx.save(); ctx.translate(p.x, baseY + bodyH * 0.3); ctx.rotate(0.3); ctx.fillRect(-1 * z, -6 * z, 2 * z, 12 * z); ctx.strokeStyle = '#5c3a1f'; ctx.lineWidth = 0.5 * z; ctx.strokeRect(-1 * z, -6 * z, 2 * z, 12 * z); ctx.restore();
@@ -1117,8 +605,7 @@
       }
 
       function drawGround() {
-        var g = ctx.createLinearGradient(0, 0, 0, cv.height);
-        g.addColorStop(0, '#0d1a10'); g.addColorStop(1, '#05100a'); ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
+        var g = ctx.createLinearGradient(0, 0, 0, cv.height); g.addColorStop(0, '#0d1a10'); g.addColorStop(1, '#05100a'); ctx.fillStyle = g; ctx.fillRect(0, 0, cv.width, cv.height);
         var tl = s2w(0, 0), br = s2w(cv.width, cv.height);
         var minX = Math.max(0, Math.floor(tl.x / GS) - 1), maxX = Math.min(COLS, Math.ceil(br.x / GS) + 1);
         var minY = Math.max(0, Math.floor(tl.y / GS) - 1), maxY = Math.min(ROWS, Math.ceil(br.y / GS) + 1);
@@ -1129,8 +616,7 @@
             ctx.fillStyle = shade; ctx.fillRect(p.x, p.y, cs + 1, cs + 1);
           }
         }
-        var ttl = w2s(0, 0), tbr = w2s(COLS * GS, ROWS * GS);
-        ctx.save(); ctx.fillStyle = 'rgba(10,20,10,0.55)';
+        var ttl = w2s(0, 0), tbr = w2s(COLS * GS, ROWS * GS); ctx.save(); ctx.fillStyle = 'rgba(10,20,10,0.55)';
         ctx.fillRect(0, 0, cv.width, Math.max(0, ttl.y));
         if (tbr.y < cv.height) ctx.fillRect(0, tbr.y, cv.width, cv.height - tbr.y);
         if (ttl.x > 0) ctx.fillRect(0, Math.max(0, ttl.y), Math.max(0, ttl.x), Math.min(cv.height, tbr.y) - Math.max(0, ttl.y));
@@ -1141,13 +627,7 @@
       }
 
       function bcolor(t) {
-        var c = {
-          house: { l: '#d4a574', d: '#8b6b3f', r: '#a0522d' }, farm: { l: '#9acd32', d: '#6b8e23', r: '#8b4513' },
-          lumberMill: { l: '#8b6b3f', d: '#5c4a2e', r: '#654321' }, barracks: { l: '#a0522d', d: '#654321', r: '#8b0000' },
-          blacksmith: { l: '#696969', d: '#404040', r: '#2f2f2f' }, wall: { l: '#a9a9a9', d: '#696969', r: '#808080' },
-          market: { l: '#daa520', d: '#b8860b', r: '#8b6914' }, tower: { l: '#b0b0b0', d: '#707070', r: '#4a4a4a' },
-          castle: { l: '#c0c0c0', d: '#808080', r: '#4a4a6a' }, dragonLair: { l: '#8b0000', d: '#4a0000', r: '#ff4500' }
-        };
+        var c = { house: { l: '#d4a574', d: '#8b6b3f', r: '#a0522d' }, farm: { l: '#9acd32', d: '#6b8e23', r: '#8b4513' }, lumberMill: { l: '#8b6b3f', d: '#5c4a2e', r: '#654321' }, barracks: { l: '#a0522d', d: '#654321', r: '#8b0000' }, blacksmith: { l: '#696969', d: '#404040', r: '#2f2f2f' }, wall: { l: '#a9a9a9', d: '#696969', r: '#808080' }, market: { l: '#daa520', d: '#b8860b', r: '#8b6914' }, tower: { l: '#b0b0b0', d: '#707070', r: '#4a4a4a' }, castle: { l: '#c0c0c0', d: '#808080', r: '#4a4a6a' }, dragonLair: { l: '#8b0000', d: '#4a0000', r: '#ff4500' } };
         return c[t] || { l: '#999', d: '#666', r: '#444' };
       }
 
@@ -1157,14 +637,11 @@
         ctx.save(); ctx.translate(p.x + ts / 2, p.y + ts / 2);
         ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.ellipse(0, ts * 0.42, ts * 0.42, ts * 0.14, 0, 0, Math.PI * 2); ctx.fill();
         var w = ts * 0.78, h = ts * 0.58, dp = ts * 0.18, col = bcolor(b.type);
-        var gr = ctx.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, col.l); gr.addColorStop(1, col.d);
-        ctx.fillStyle = gr;
+        var gr = ctx.createLinearGradient(0, -h / 2, 0, h / 2); gr.addColorStop(0, col.l); gr.addColorStop(1, col.d); ctx.fillStyle = gr;
         ctx.beginPath(); ctx.moveTo(-w / 2, -h / 2 + dp); ctx.lineTo(w / 2, -h / 2 + dp); ctx.lineTo(w / 2, h / 2 + dp); ctx.lineTo(-w / 2, h / 2 + dp); ctx.closePath(); ctx.fill();
         ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = Math.max(1, cam.zoom * 1.5); ctx.stroke();
-        ctx.fillStyle = col.r;
-        ctx.beginPath(); ctx.moveTo(-w / 2, -h / 2 + dp); ctx.lineTo(0, -h / 2 - dp * 0.4); ctx.lineTo(w / 2, -h / 2 + dp); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = col.d;
-        ctx.beginPath(); ctx.moveTo(w / 2, -h / 2 + dp); ctx.lineTo(w / 2, h / 2 + dp); ctx.lineTo(w / 2 - dp, h / 2 + dp - dp * 0.5); ctx.lineTo(w / 2 - dp, -h / 2 + dp - dp * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col.r; ctx.beginPath(); ctx.moveTo(-w / 2, -h / 2 + dp); ctx.lineTo(0, -h / 2 - dp * 0.4); ctx.lineTo(w / 2, -h / 2 + dp); ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = col.d; ctx.beginPath(); ctx.moveTo(w / 2, -h / 2 + dp); ctx.lineTo(w / 2, h / 2 + dp); ctx.lineTo(w / 2 - dp, h / 2 + dp - dp * 0.5); ctx.lineTo(w / 2 - dp, -h / 2 + dp - dp * 0.5); ctx.closePath(); ctx.fill(); ctx.stroke();
         ctx.font = ts * 0.38 + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(def.icon, 0, dp * 0.4);
         if (b.level > 0) {
           var st = ''; for (var i = 0; i < Math.min(b.level, 5); i++) st += '★';
@@ -1176,10 +653,8 @@
 
       function drawHover() {
         if (!mouse.inside) return;
-        var g = s2g(mouse.x, mouse.y);
-        if (g.gx < 0 || g.gx >= COLS || g.gy < 0 || g.gy >= ROWS) return;
-        var p = w2s(g.gx * GS, g.gy * GS);
-        ctx.save();
+        var g = s2g(mouse.x, mouse.y); if (g.gx < 0 || g.gx >= COLS || g.gy < 0 || g.gy >= ROWS) return;
+        var p = w2s(g.gx * GS, g.gy * GS); ctx.save();
         if (demolishMode) {
           var b = buildingAt(g.gx, g.gy);
           if (b) {
@@ -1187,9 +662,7 @@
             ctx.fillStyle = 'rgba(255,50,50,0.4)'; ctx.fillRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
             ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 3; ctx.strokeRect(bp.x, bp.y, GS * sz * cam.zoom, GS * sz * cam.zoom);
           }
-        } else if (!placing) {
-          ctx.strokeStyle = 'rgba(255,217,102,0.85)'; ctx.lineWidth = 2; ctx.strokeRect(p.x, p.y, GS * cam.zoom, GS * cam.zoom);
-        }
+        } else if (!placing) { ctx.strokeStyle = 'rgba(255,217,102,0.85)'; ctx.lineWidth = 2; ctx.strokeRect(p.x, p.y, GS * cam.zoom, GS * cam.zoom); }
         ctx.restore();
       }
 
@@ -1197,8 +670,7 @@
         if (!placing || !mouse.inside) return;
         var def = S[placing], g = s2g(mouse.x, mouse.y), size = def.size;
         var can = g.gx >= 0 && g.gx + size <= COLS && g.gy >= 0 && g.gy + size <= ROWS && !anyOcc(g.gx, g.gy, size) && treeAtIndex(g.gx, g.gy) < 0;
-        var p = w2s(g.gx * GS, g.gy * GS), cs = GS * cam.zoom;
-        ctx.save();
+        var p = w2s(g.gx * GS, g.gy * GS), cs = GS * cam.zoom; ctx.save();
         ctx.fillStyle = can ? 'rgba(80,255,80,0.35)' : 'rgba(255,60,60,0.4)'; ctx.fillRect(p.x, p.y, cs * size, cs * size);
         ctx.strokeStyle = can ? '#00ff66' : '#ff3333'; ctx.lineWidth = 3; ctx.strokeRect(p.x, p.y, cs * size, cs * size);
         ctx.font = (cs * size * 0.5) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.globalAlpha = 0.8;
@@ -1213,10 +685,7 @@
         for (var i = 0; i < citizens.length; i++) items.push({ y: citizens[i].y, kind: 'c', data: citizens[i] });
         items.sort(function(a, b) { return a.y - b.y; });
         for (var i = 0; i < items.length; i++) {
-          var it = items[i];
-          if (it.kind === 'tree') drawTree(it.data);
-          else if (it.kind === 'b') drawBuilding(it.data);
-          else if (it.kind === 'c') drawCitizen(it.data);
+          var it = items[i]; if (it.kind === 'tree') drawTree(it.data); else if (it.kind === 'b') drawBuilding(it.data); else if (it.kind === 'c') drawCitizen(it.data);
         }
         drawHover(); drawPreview();
       }
@@ -1229,8 +698,7 @@
       requestAnimationFrame(loop);
 
       function tick() {
-        var now = Date.now(), dt = Math.min((now - state.lastTick) / 1000, 2);
-        state.lastTick = now;
+        var now = Date.now(), dt = Math.min((now - state.lastTick) / 1000, 2); state.lastTick = now;
         var gr = 0, wr = 0;
         for (var i = 0; i < state.buildings.length; i++) {
           var b = state.buildings[i], def = S[b.type]; if (!def) continue;
@@ -1275,26 +743,14 @@
         var def = S[placing], size = def.size;
         if (gx < 0 || gx + size > COLS || gy < 0 || gy + size > ROWS) { addLog('❌ За пределами карты'); return; }
         if (anyOcc(gx, gy, size)) { addLog('❌ Место занято'); return; }
-        
-        // Проверка на деревья во всех тайлах здания (фикс бага 2x2)
-        for (var tx = gx; tx < gx + size; tx++) {
-            for (var ty = gy; ty < gy + size; ty++) {
-                if (treeAtIndex(tx, ty) >= 0) { addLog('❌ Здесь дерево'); return; }
-            }
-        }
-        
+        for (var tx = gx; tx < gx + size; tx++) { for (var ty = gy; ty < gy + size; ty++) { if (treeAtIndex(tx, ty) >= 0) { addLog('❌ Здесь дерево'); return; } } }
         if (state.gold < def.cost.g || state.wood < def.cost.w) { addLog('❌ Не хватает ресурсов'); return; }
         state.gold -= def.cost.g; state.wood -= def.cost.w;
         var bId = 'b' + Date.now() + Math.random().toString(36).slice(2, 6);
         state.buildings.push({ id: bId, type: placing, gx: gx, gy: gy, level: 1 });
         if (def.type === 'army') state.army += def.per;
         if (def.type === 'mixed') state.army += def.per * 3;
-        if (def.pop) {
-          for (var i = 0; i < def.pop; i++) {
-            var role = def.worker || 'wander';
-            spawnCitizen(bId, gx + (size - 1) / 2, gy + (size - 1) / 2, role); // Фикс спавна
-          }
-        }
+        if (def.pop) { for (var i = 0; i < def.pop; i++) { var role = def.worker || 'wander'; spawnCitizen(bId, gx + (size - 1) / 2, gy + (size - 1) / 2, role); } }
         addLog('✅ ' + def.name + ' построен'); save(); updateHUD(); placing = null; updateBanner(); renderShop();
       }
 
@@ -1317,75 +773,36 @@
       }
 
       var mousePanning = false, mousePanStartX = 0, mousePanStartY = 0, mouseCamStartX = 0, mouseCamStartY = 0, mouseMoved = false;
-
       cv.addEventListener('wheel', function(e) { e.preventDefault(); zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.15 : 1 / 1.15); }, { passive: false });
-      cv.addEventListener('mousemove', function(e) {
-        mouse.x = e.clientX; mouse.y = e.clientY; mouse.inside = true;
-        if (mousePanning) {
-          var dx = e.clientX - mousePanStartX, dy = e.clientY - mousePanStartY;
-          if (Math.abs(dx) + Math.abs(dy) > 3) mouseMoved = true;
-          cam.x = mouseCamStartX - dx / cam.zoom; cam.y = mouseCamStartY - dy / cam.zoom;
-        }
-      });
+      cv.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; mouse.inside = true; if (mousePanning) { var dx = e.clientX - mousePanStartX, dy = e.clientY - mousePanStartY; if (Math.abs(dx) + Math.abs(dy) > 3) mouseMoved = true; cam.x = mouseCamStartX - dx / cam.zoom; cam.y = mouseCamStartY - dy / cam.zoom; } });
       cv.addEventListener('mouseleave', function() { mouse.inside = false; });
-      cv.addEventListener('mousedown', function(e) {
-        if (e.button === 2) {
-          e.preventDefault(); mousePanning = true; mousePanStartX = e.clientX; mousePanStartY = e.clientY; mouseCamStartX = cam.x; mouseCamStartY = cam.y; mouseMoved = false;
-        }
-      });
-      cv.addEventListener('mouseup', function(e) {
-        if (e.button === 2) {
-          mousePanning = false;
-          if (!mouseMoved) {
-            if (placing) { placing = null; updateBanner(); renderShop(); addLog('🚫 Отменено'); }
-            if (demolishMode) { demolishMode = false; updateBanner(); addLog('🚫 Отменено'); }
-          }
-        }
-      });
+      cv.addEventListener('mousedown', function(e) { if (e.button === 2) { e.preventDefault(); mousePanning = true; mousePanStartX = e.clientX; mousePanStartY = e.clientY; mouseCamStartX = cam.x; mouseCamStartY = cam.y; mouseMoved = false; } });
+      cv.addEventListener('mouseup', function(e) { if (e.button === 2) { mousePanning = false; if (!mouseMoved) { if (placing) { placing = null; updateBanner(); renderShop(); addLog('🚫 Отменено'); } if (demolishMode) { demolishMode = false; updateBanner(); addLog('🚫 Отменено'); } } } });
       cv.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
       var touches = {}, touchMode = null, panStart = { x: 0, y: 0, camX: 0, camY: 0 }, pinchStart = { dist: 0, camX: 0, camY: 0, zoom: 0, midWorldX: 0, midWorldY: 0 }, touchHasMoved = false, touchStartTime = 0, touchStartPos = { x: 0, y: 0 }, TAP_MAX_TIME = 300, TAP_MAX_DIST = 20;
-
       function getTouchIds() { return Object.keys(touches).map(Number); }
       function getTwoTouches() { var ids = getTouchIds(); if (ids.length < 2) return null; return [touches[ids[0]], touches[ids[1]]]; }
       function tdist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
       function tmid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 
       cv.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        for (var i = 0; i < e.changedTouches.length; i++) { var t = e.changedTouches[i]; touches[t.identifier] = { x: t.clientX, y: t.clientY }; }
+        e.preventDefault(); for (var i = 0; i < e.changedTouches.length; i++) { var t = e.changedTouches[i]; touches[t.identifier] = { x: t.clientX, y: t.clientY }; }
         var ids = getTouchIds();
-        if (ids.length === 1) {
-          var t0 = touches[ids[0]]; touchMode = 'pan'; panStart.x = t0.x; panStart.y = t0.y; panStart.camX = cam.x; panStart.camY = cam.y; touchHasMoved = false; touchStartTime = Date.now(); touchStartPos.x = t0.x; touchStartPos.y = t0.y;
-        } else if (ids.length >= 2) {
-          var pair = getTwoTouches(), m = tmid(pair[0], pair[1]), w = s2w(m.x, m.y);
-          touchMode = 'pinch'; pinchStart.dist = tdist(pair[0], pair[1]); pinchStart.camX = cam.x; pinchStart.camY = cam.y; pinchStart.zoom = cam.zoom; pinchStart.midWorldX = w.x; pinchStart.midWorldY = w.y; touchHasMoved = true;
-        }
+        if (ids.length === 1) { var t0 = touches[ids[0]]; touchMode = 'pan'; panStart.x = t0.x; panStart.y = t0.y; panStart.camX = cam.x; panStart.camY = cam.y; touchHasMoved = false; touchStartTime = Date.now(); touchStartPos.x = t0.x; touchStartPos.y = t0.y; }
+        else if (ids.length >= 2) { var pair = getTwoTouches(), m = tmid(pair[0], pair[1]), w = s2w(m.x, m.y); touchMode = 'pinch'; pinchStart.dist = tdist(pair[0], pair[1]); pinchStart.camX = cam.x; pinchStart.camY = cam.y; pinchStart.zoom = cam.zoom; pinchStart.midWorldX = w.x; pinchStart.midWorldY = w.y; touchHasMoved = true; }
       }, { passive: false });
 
       cv.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-        for (var i = 0; i < e.changedTouches.length; i++) { var t = e.changedTouches[i]; if (touches[t.identifier]) touches[t.identifier] = { x: t.clientX, y: t.clientY }; }
+        e.preventDefault(); for (var i = 0; i < e.changedTouches.length; i++) { var t = e.changedTouches[i]; if (touches[t.identifier]) touches[t.identifier] = { x: t.clientX, y: t.clientY }; }
         var ids = getTouchIds();
-        if (touchMode === 'pan' && ids.length === 1) {
-          var t0 = touches[ids[0]], dx = t0.x - panStart.x, dy = t0.y - panStart.y;
-          if (Math.abs(dx) + Math.abs(dy) > 6) touchHasMoved = true;
-          cam.x = panStart.camX - dx / cam.zoom; cam.y = panStart.camY - dy / cam.zoom;
-        } else if (touchMode === 'pinch' && ids.length >= 2) {
-          var pair = getTwoTouches(), newDist = tdist(pair[0], pair[1]), m = tmid(pair[0], pair[1]);
-          if (pinchStart.dist > 0 && newDist > 0) {
-            var factor = newDist / pinchStart.dist, nz = Math.max(cam.minZoom, Math.min(cam.maxZoom, pinchStart.zoom * factor));
-            cam.zoom = nz; cam.x = pinchStart.midWorldX - (m.x - cv.width / 2) / cam.zoom; cam.y = pinchStart.midWorldY - (m.y - cv.height / 2) / cam.zoom; updateHUD();
-          }
-        } else if (ids.length >= 2 && touchMode === 'pan') {
-          var pair2 = getTwoTouches(), m2 = tmid(pair2[0], pair2[1]), w2 = s2w(m2.x, m2.y);
-          touchMode = 'pinch'; pinchStart.dist = tdist(pair2[0], pair2[1]); pinchStart.camX = cam.x; pinchStart.camY = cam.y; pinchStart.zoom = cam.zoom; pinchStart.midWorldX = w2.x; pinchStart.midWorldY = w2.y;
-        }
+        if (touchMode === 'pan' && ids.length === 1) { var t0 = touches[ids[0]], dx = t0.x - panStart.x, dy = t0.y - panStart.y; if (Math.abs(dx) + Math.abs(dy) > 6) touchHasMoved = true; cam.x = panStart.camX - dx / cam.zoom; cam.y = panStart.camY - dy / cam.zoom; }
+        else if (touchMode === 'pinch' && ids.length >= 2) { var pair = getTwoTouches(), newDist = tdist(pair[0], pair[1]), m = tmid(pair[0], pair[1]); if (pinchStart.dist > 0 && newDist > 0) { var factor = newDist / pinchStart.dist, nz = Math.max(cam.minZoom, Math.min(cam.maxZoom, pinchStart.zoom * factor)); cam.zoom = nz; cam.x = pinchStart.midWorldX - (m.x - cv.width / 2) / cam.zoom; cam.y = pinchStart.midWorldY - (m.y - cv.height / 2) / cam.zoom; updateHUD(); } }
+        else if (ids.length >= 2 && touchMode === 'pan') { var pair2 = getTwoTouches(), m2 = tmid(pair2[0], pair2[1]), w2 = s2w(m2.x, m2.y); touchMode = 'pinch'; pinchStart.dist = tdist(pair2[0], pair2[1]); pinchStart.camX = cam.x; pinchStart.camY = cam.y; pinchStart.zoom = cam.zoom; pinchStart.midWorldX = w2.x; pinchStart.midWorldY = w2.y; }
       }, { passive: false });
 
       cv.addEventListener('touchend', function(e) {
-        e.preventDefault();
-        for (var i = 0; i < e.changedTouches.length; i++) { delete touches[e.changedTouches[i].identifier]; }
+        e.preventDefault(); for (var i = 0; i < e.changedTouches.length; i++) { delete touches[e.changedTouches[i].identifier]; }
         var ids = getTouchIds();
         if (ids.length === 0) {
           if (touchMode === 'pan' && !touchHasMoved && (Date.now() - touchStartTime) < TAP_MAX_TIME) {
@@ -1395,40 +812,22 @@
             else if (placing) tryPlace(g.gx, g.gy);
           }
           touchMode = null; touchHasMoved = false;
-        } else if (ids.length === 1) {
-          var t0 = touches[ids[0]]; touchMode = 'pan'; panStart.x = t0.x; panStart.y = t0.y; panStart.camX = cam.x; panStart.camY = cam.y; touchHasMoved = true;
-        }
+        } else if (ids.length === 1) { var t0 = touches[ids[0]]; touchMode = 'pan'; panStart.x = t0.x; panStart.y = t0.y; panStart.camX = cam.x; panStart.camY = cam.y; touchHasMoved = true; }
       }, { passive: false });
 
-      cv.addEventListener('touchcancel', function(e) {
-        e.preventDefault();
-        for (var i = 0; i < e.changedTouches.length; i++) { delete touches[e.changedTouches[i].identifier]; }
-        if (getTouchIds().length === 0) { touchMode = null; touchHasMoved = false; }
-      }, { passive: false });
+      cv.addEventListener('touchcancel', function(e) { e.preventDefault(); for (var i = 0; i < e.changedTouches.length; i++) { delete touches[e.changedTouches[i].identifier]; } if (getTouchIds().length === 0) { touchMode = null; touchHasMoved = false; } }, { passive: false });
 
-      cv.addEventListener('click', function(e) {
-        if (mousePanning || mouseMoved) return;
-        var g = s2g(e.clientX, e.clientY);
-        if (demolishMode) demolishBuilding(g.gx, g.gy);
-        else if (placing) tryPlace(g.gx, g.gy);
-      });
+      cv.addEventListener('click', function(e) { if (mousePanning || mouseMoved) return; var g = s2g(e.clientX, e.clientY); if (demolishMode) demolishBuilding(g.gx, g.gy); else if (placing) tryPlace(g.gx, g.gy); });
 
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-          if (placing) { placing = null; updateBanner(); renderShop(); }
-          if (demolishMode) { demolishMode = false; updateBanner(); }
-        }
+        if (e.key === 'Escape') { if (placing) { placing = null; updateBanner(); renderShop(); } if (demolishMode) { demolishMode = false; updateBanner(); } }
         if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') { setShopCollapsed(!shopCollapsed, true); }
       });
 
       document.getElementById('zi').onclick = function() { zoomAt(cv.width / 2, cv.height / 2, 1.25); };
       document.getElementById('zo').onclick = function() { zoomAt(cv.width / 2, cv.height / 2, 1 / 1.25); };
       document.getElementById('zr').onclick = function() { cam.x = COLS * GS / 2; cam.y = ROWS * GS / 2; cam.zoom = 0.7; updateHUD(); };
-      document.getElementById('demolishBtn').onclick = function() {
-        if (demolishMode) { demolishMode = false; addLog('🚫 Снос отменён'); }
-        else { placing = null; demolishMode = true; addLog('🗑️ Режим сноса'); }
-        updateBanner(); renderShop();
-      };
+      document.getElementById('demolishBtn').onclick = function() { if (demolishMode) { demolishMode = false; addLog('🚫 Снос отменён'); } else { placing = null; demolishMode = true; addLog('🗑️ Режим сноса'); } updateBanner(); renderShop(); };
 
       function resetGame() {
         if (!confirm('Удалить всё и начать заново?')) return;
@@ -1442,26 +841,22 @@
 
       function checkRank() {
         var r = curRank();
-        if (r.maxWins !== Infinity && state.wins >= r.maxWins && state.rankIndex < RANKS.length - 1) {
-          state.rankIndex++; addLog('🎉 Ранг: ' + RANKS[state.rankIndex].name); renderShop();
-        }
+        if (r.maxWins !== Infinity && state.wins >= r.maxWins && state.rankIndex < RANKS.length - 1) { state.rankIndex++; addLog('🎉 Ранг: ' + RANKS[state.rankIndex].name); renderShop(); }
       }
+      
       document.getElementById('findBtn').onclick = findOpponent;
       document.getElementById('mclose').onclick = function() { document.getElementById('modal').style.display = 'none'; };
 
-      // ============ СТАРТ ============
       load(); generateTrees();
       for (var i = 0; i < state.buildings.length; i++) {
         var b = state.buildings[i], def = S[b.type];
         if (def && def.pop) {
           var existing = citizens.filter(function(c) { return c.homeId === b.id; }).length;
-          for (var j = existing; j < def.pop * (b.level || 1); j++) {
-            spawnCitizen(b.id, b.gx + (def.size - 1) / 2, b.gy + (def.size - 1) / 2, def.worker || 'wander');
-          }
+          for (var j = existing; j < def.pop * (b.level || 1); j++) { spawnCitizen(b.id, b.gx + (def.size - 1) / 2, b.gy + (def.size - 1) / 2, def.worker || 'wander'); }
         }
       }
       renderShop(); updateHUD();
-      addLog('🏁 Kingdom Runner 1.9 загружен');
+      addLog('🏁 Kingdom Runner загружен. Онлайн активен!');
       
       setTimeout(function() { var h = document.getElementById('help'); if (h) h.classList.add('hidden'); }, 8000);
 
@@ -1469,19 +864,12 @@
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('sw.js').then(function(reg) {
-                console.log('ServiceWorker зарегистрирован! Офлайн-режим готов.');
+                console.log('ServiceWorker зарегистрирован!');
             }, function(err) {
                 console.log('Ошибка ServiceWorker: ', err);
             });
         });
       }
-
-      // Отладка
-      window.KR = {
-        state: function() { return state; }, trees: function() { return trees; },
-        growNow: function(n) { for (var i = 0; i < (n || 10); i++) growOneTree(); updateForestHUD(); },
-        zoom: function(z) { cam.zoom = Math.max(cam.minZoom, Math.min(cam.maxZoom, z)); updateHUD(); }
-      };
 
     })();
   </script>
