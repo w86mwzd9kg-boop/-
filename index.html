@@ -2,8 +2,11 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1">
-  <title>Kingdom Runner — Interactive Battles</title>
+  <title>Kingdom Runner — Epic Battles v1.2</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0b1e12">
 
@@ -82,8 +85,15 @@
     .battle-progress-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: .8rem; text-shadow: 1px 1px 3px #000, 0 0 5px #000; letter-spacing: 1px }
     .battle-stats { display: flex; gap: 16px; background: rgba(20,20,30,.85); padding: 5px 16px; border-radius: 20px; color: #fff; font-size: .78rem; backdrop-filter: blur(5px) }
     .battle-stats b { color: #ffd966 }
-    .battle-bottom { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding-bottom: 4px }
+    .battle-bottom { display: flex; gap: 10px; justify-content: center; align-items: flex-end; flex-wrap: wrap; padding-bottom: 4px }
     .battle-btn { padding: 12px 20px; font-size: .9rem; min-width: 100px; text-align: center }
+    
+    /* Кнопка метеорита */
+    .meteor-btn { position: absolute; right: 20px; bottom: 20px; width: 80px; height: 80px; border-radius: 50%; background: rgba(20,20,30,.9); border: 3px solid #555; cursor: not-allowed; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,.8); transition: .2s; overflow: hidden; }
+    .meteor-btn.ready { border-color: #ff4500; color: #fff; cursor: pointer; box-shadow: 0 0 30px #ff4500; background: rgba(80,20,10,.9); }
+    .meteor-btn .mana-fill { position: absolute; bottom: 0; left: 0; width: 100%; height: 0%; background: rgba(255,69,0,.4); transition: height .2s; z-index: -1; }
+    .meteor-btn span { font-size: 1.8rem; line-height: 1; margin-bottom: 4px; }
+    .meteor-btn small { font-size: .65rem; }
 
     body.in-battle .hud, body.in-battle .shop, body.in-battle .shop-toggle,
     body.in-battle .bar, body.in-battle .forest-badge, body.in-battle .zoom-ind,
@@ -100,6 +110,8 @@
       .battle-btn { padding: 10px 14px; font-size: .78rem; min-width: 80px }
       .battle-progress-bar { height: 22px }
       .battle-status { padding: 6px 14px; font-size: .85rem }
+      .meteor-btn { width: 65px; height: 65px; bottom: 15px; right: 15px; }
+      .meteor-btn span { font-size: 1.4rem; }
     }
   </style>
 </head>
@@ -116,9 +128,11 @@
     <div class="rank-badge" id="rank">🏆 Арена 1: Новобранец</div>
   </div>
   <div class="forest-badge" id="forestBadge">🌲 Лес: <b id="treeCount">0</b> / <span id="treeMax">0</span></div>
+  
   <div class="help" id="help">
     <b>Управление:</b><br>🖱️ ЛКМ — постройка/снос<br>🖱️ ПКМ — панорама<br>🖲️ Колесо — зум<br>👆 1 палец — панорама<br>✌️ 2 пальца — зум<br><span style="opacity:.7">(скроется через 8с)</span>
   </div>
+  
   <button class="shop-toggle" id="shopToggle" title="Скрыть/показать постройки"><span class="icon">▶</span></button>
   <div class="shop" id="shop"><h3>🏗️ Постройки</h3><div id="shopList"></div></div>
   <div class="banner" id="banner"></div>
@@ -155,8 +169,14 @@
     </div>
     <div class="battle-bottom">
       <button class="btn battle-btn" id="selectAllBtn">👥 Все</button>
-      <button class="btn battle-btn" id="focusHQBtn">🎯 Штаб</button>
       <button class="btn battle-btn danger" id="retreatBtn">🏳️ Отступить</button>
+    </div>
+    
+    <!-- Магия / Метеорит -->
+    <div class="meteor-btn" id="meteorBtn" title="Небесная кара">
+      <div class="mana-fill" id="manaFill"></div>
+      <span>☄️</span>
+      <small id="meteorText">Мана: 0%</small>
     </div>
   </div>
 
@@ -172,8 +192,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, onDisconnect, off } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    const GAME_VERSION = "2.1";
-
+    const GAME_VERSION = "1.2";
     const firebaseConfig = {
       apiKey: "AIzaSyCvr3N350SeY-UImZfqxvRQbte6lhLeA7g",
       authDomain: "kingdom-online-ef88b.firebaseapp.com",
@@ -223,14 +242,15 @@
       const UNITS = {
         soldier: { name: 'Мечник', icon: '⚔️', color: '#c0392b', accent: '#8b0000', skin: '#f5cba7', hp: 90, dmg: 12, range: 1.4, speed: 3.5, cd: 0.9, weight: 0.5 },
         archer:  { name: 'Лучник', icon: '🏹', color: '#27ae60', accent: '#1e8449', skin: '#e8b88a', hp: 55, dmg: 9,  range: 4.8, speed: 3.2, cd: 1.1, weight: 0.3 },
-        knight:  { name: 'Рыцарь', icon: '🐴', color: '#8e44ad', accent: '#6c3483', skin: '#d4a373', hp: 160, dmg: 20, range: 1.5, speed: 2.8, cd: 1.1, weight: 0.2 }
+        knight:  { name: 'Рыцарь', icon: '🐴', color: '#8e44ad', accent: '#6c3483', skin: '#d4a373', hp: 160, dmg: 20, range: 1.5, speed: 2.8, cd: 1.1, weight: 0.2 },
+        hero:    { name: 'Король', icon: '👑', color: '#f1c40f', accent: '#f39c12', skin: '#f5cba7', hp: 400, dmg: 35, range: 2.0, speed: 3.0, cd: 0.8, weight: 0 }
       };
 
       var state = { gold: 150, wood: 80, army: 10, wins: 0, rankIndex: 0, buildings: [], lastTick: Date.now() };
       var cam = { x: COLS * GS / 2, y: ROWS * GS / 2, zoom: 0.7, minZoom: 0.15, maxZoom: 3.0 };
       var placing = null, demolishMode = false, mouse = { x: 0, y: 0, inside: false };
       var gameTime = 0, treeGrowTimer = 0;
-      var particles = [];
+      var particles = [], floatTexts = [];
       var citizens = [];
       var trees = [], TREE_TYPES = [
         { name: 'oak',   color1: '#2d5016', color2: '#4a7a2e', trunk: '#5c3a1f' },
@@ -254,18 +274,27 @@
       function sfxChop() { beep(200, .04, 'square', .02); }
       function sfxWin() { beep(523, .15); setTimeout(function(){ beep(659, .15); }, 120); setTimeout(function(){ beep(784, .25); }, 240); }
       function sfxLose() { beep(300, .2, 'sawtooth'); setTimeout(function(){ beep(200, .3, 'sawtooth'); }, 180); }
+      function sfxMeteor() { beep(100, .5, 'sawtooth', .1); setTimeout(function(){ beep(50, .8, 'sawtooth', .15); }, 200); }
 
-      // ============ ЧАСТИЦЫ ============
+      // ============ ЧАСТИЦЫ И ТЕКСТ ============
       function spawnParticles(x, y, count, color, speed, size, life) {
         for (var i = 0; i < count; i++) {
           particles.push({ x: x, y: y, vx: (Math.random() - 0.5) * speed, vy: (Math.random() - 0.5) * speed, size: Math.random() * size + 1, color: color, life: life + Math.random() * life, maxLife: life });
         }
+      }
+      function spawnFloatText(x, y, text, color) {
+        floatTexts.push({ x: x, y: y, text: text, color: color, life: 1.0, maxLife: 1.0 });
       }
       function updateParticles(dt) {
         for (var i = particles.length - 1; i >= 0; i--) {
           var p = particles[i];
           p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; p.vx *= 0.95; p.vy *= 0.95;
           if (p.life <= 0) particles.splice(i, 1);
+        }
+        for (var j = floatTexts.length - 1; j >= 0; j--) {
+          var ft = floatTexts[j];
+          ft.y -= 30 * dt; ft.life -= dt;
+          if (ft.life <= 0) floatTexts.splice(j, 1);
         }
       }
       function drawParticles() {
@@ -274,6 +303,17 @@
           var p = particles[i];
           ctx.globalAlpha = Math.max(0, p.life / p.maxLife); ctx.fillStyle = p.color;
           ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      }
+      function drawFloatTexts() {
+        ctx.save();
+        for (var i = 0; i < floatTexts.length; i++) {
+          var ft = floatTexts[i];
+          ctx.globalAlpha = Math.max(0, ft.life / ft.maxLife);
+          ctx.fillStyle = ft.color; ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center'; ctx.strokeStyle = '#000'; ctx.lineWidth = 3;
+          ctx.strokeText(ft.text, ft.x, ft.y); ctx.fillText(ft.text, ft.x, ft.y);
         }
         ctx.restore();
       }
@@ -291,7 +331,6 @@
       function anyOcc(gx, gy, size) { for (var x = gx; x < gx + size; x++) for (var y = gy; y < gy + size; y++) if (occupied(x, y)) return true; return false; }
       function treeAtIndex(gx, gy) { for (var i = 0; i < trees.length; i++) if (Math.floor(trees[i].x / GS) === gx && Math.floor(trees[i].y / GS) === gy) return i; return -1; }
       function buildingAt(gx, gy) { for (var i = 0; i < state.buildings.length; i++) { var b = state.buildings[i], s = S[b.type].size; if (gx >= b.gx && gx < b.gx + s && gy >= b.gy && gy < b.gy + s) return b; } return null; }
-      function calcDefense() { var d = 0; for (var i = 0; i < state.buildings.length; i++) { var b = state.buildings[i], def = S[b.type]; if (def && def.type === 'defense') d += def.per * (b.level || 0); } return d; }
 
       // ============ СОХРАНЕНИЕ ============
       function save() { try { localStorage.setItem('kr20', JSON.stringify({ gold: state.gold, wood: state.wood, army: state.army, wins: state.wins, rankIndex: state.rankIndex, buildings: state.buildings, gameTime: gameTime, shopCollapsed: document.getElementById('shop').classList.contains('collapsed') })); } catch(e) {} }
@@ -429,14 +468,12 @@
         }
       }
 
-      // ============ БИТВА И ИНТЕРАКТИВ ============
-      var battleState = { active: false, timer: 0, playerWin: false, units: [], enemyBuildings: [], playerBuildings: [], selectedUnits: [], phase: 'attack', log: '' };
+      // ============ БИТВА ============
+      var battleState = { active: false, timer: 0, playerWin: false, units: [], enemyBuildings: [], selectedUnits: [], mana: 0, maxMana: 100, castingMeteor: false };
       var isMatching = false, matchTimer = null, currentQueueRef = null;
       
       // Для выделения рамкой
       var boxSelect = { active: false, startX: 0, startY: 0, endX: 0, endY: 0 };
-
-      function mulberry32(a) { return function() { var t = a += 0x6D2B79F5; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; } }
 
       function findOpponent(useBot) {
         if (isMatching) return;
@@ -514,8 +551,8 @@
         battleState.active = true; battleState.timer = BATTLE_DURATION;
         battleState.playerWin = false; battleState.units = []; battleState.selectedUnits = [];
         battleState.enemyBuildings = result.enemyBuildings.map(b => ({ ...b, hp: S[b.type].hp, maxHp: S[b.type].hp }));
-        battleState.playerBuildings = []; 
-        particles = [];
+        battleState.mana = 0; battleState.castingMeteor = false;
+        particles = []; floatTexts = [];
 
         // Спавн юнитов (синие - наши)
         let pUnits = Math.min(30, Math.floor(state.army / 2) + 5);
@@ -523,6 +560,11 @@
             let type = Math.random() < 0.6 ? 'soldier' : (Math.random() < 0.5 ? 'archer' : 'knight');
             battleState.units.push({ side: 'player', type: type, x: COLS/2 + (Math.random()-0.5)*15, y: ROWS + 2, hp: UNITS[type].hp, maxHp: UNITS[type].hp, cd: 0, selected: false, targetPos: null, targetUnit: null });
         }
+        // Добавляем Героя, если армия > 30
+        if (state.army > 30) {
+            battleState.units.push({ side: 'player', type: 'hero', x: COLS/2, y: ROWS + 3, hp: UNITS.hero.hp, maxHp: UNITS.hero.hp, cd: 0, selected: false, targetPos: null, targetUnit: null });
+        }
+
         // Спавн юнитов (красные - враги)
         let eUnits = Math.min(30, Math.floor(result.enemyArmy / 2) + 5);
         for (let i = 0; i < eUnits; i++) {
@@ -548,6 +590,15 @@
         document.getElementById('buildingsLeft').textContent = bCount;
         document.getElementById('battleProgressFill').style.width = destroyed + '%';
         document.getElementById('battleProgressText').textContent = destroyed + '% разрушено';
+
+        // Обновление кнопки метеорита
+        let manaPct = Math.floor((battleState.mana / battleState.maxMana) * 100);
+        document.getElementById('manaFill').style.height = manaPct + '%';
+        document.getElementById('meteorText').textContent = manaPct >= 100 ? 'ГОТОВО!' : 'Мана: ' + manaPct + '%';
+        let mBtn = document.getElementById('meteorBtn');
+        if (manaPct >= 100) mBtn.classList.add('ready'); else mBtn.classList.remove('ready');
+        if (battleState.castingMeteor) mBtn.style.borderColor = '#fff';
+        else mBtn.style.borderColor = manaPct >= 100 ? '#ff4500' : '#555';
       }
 
       function updateBattle(dt) {
@@ -555,23 +606,56 @@
         battleState.timer -= dt;
         if (battleState.timer <= 0) { endBattle(false); return; }
 
-        // AI юнитов
-        battleState.units.forEach(u => {
-            // Проверка цели-юнита
-            if (u.targetUnit && (u.targetUnit.hp <= 0 || (!u.targetUnit.x && !u.targetUnit.gx))) {
-                u.targetUnit = null;
-            }
+        // Мана
+        battleState.mana = Math.min(battleState.maxMana, battleState.mana + dt * 8);
 
-            let targetX, targetY, range = UNITS[u.type].range;
-            
+        // Логика юнитов
+        battleState.units.forEach(u => {
+            if (u.hp <= 0) return;
+            let def = UNITS[u.type];
+            let range = def.range;
+
+            // Валидация цели
+            if (u.targetUnit && (u.targetUnit.hp <= 0)) u.targetUnit = null;
+            if (u.targetPos && Math.hypot(u.x - u.targetPos.x, u.y - u.targetPos.y) < 0.5) u.targetPos = null;
+
+            // Если цель есть — идем к ней
             if (u.targetUnit) {
-                targetX = u.targetUnit.x !== undefined ? u.targetUnit.x : u.targetUnit.gx;
-                targetY = u.targetUnit.y !== undefined ? u.targetUnit.y : u.targetUnit.gy;
+                let tx = u.targetUnit.x !== undefined ? u.targetUnit.x : u.targetUnit.gx;
+                let ty = u.targetUnit.y !== undefined ? u.targetUnit.y : u.targetUnit.gy;
+                let dist = Math.hypot(tx - u.x, ty - u.y);
+                
+                if (dist <= range) {
+                    // Атака
+                    u.cd -= dt;
+                    if (u.cd <= 0) {
+                        u.cd = def.cd;
+                        u.targetUnit.hp -= def.dmg;
+                        sfxHit();
+                        let sp = w2s(u.x * GS, u.y * GS);
+                        spawnParticles(sp.x, sp.y, 5, u.side === 'player' ? '#3498db' : '#e74c3c', 50, 3, 0.5);
+                        spawnFloatText(sp.x, sp.y - 20, '-' + def.dmg, u.side === 'player' ? '#f1c40f' : '#e74c3c');
+                        if (u.targetUnit.hp <= 0 && u.targetUnit.gx !== undefined) {
+                            let bsp = w2s(u.targetUnit.gx * GS + GS/2, u.targetUnit.gy * GS + GS/2);
+                            spawnParticles(bsp.x, bsp.y, 20, '#8b6b3f', 100, 4, 1);
+                        }
+                    }
+                } else {
+                    // Движение к цели
+                    let step = def.speed * dt;
+                    u.x += ((tx - u.x) / dist) * step;
+                    u.y += ((ty - u.y) / dist) * step;
+                }
             } else if (u.side === 'player' && u.selected && u.targetPos) {
-                targetX = u.targetPos.x;
-                targetY = u.targetPos.y;
+                // Приказ игрока
+                let dist = Math.hypot(u.targetPos.x - u.x, u.targetPos.y - u.y);
+                if (dist > 0.5) {
+                    let step = def.speed * dt;
+                    u.x += ((u.targetPos.x - u.x) / dist) * step;
+                    u.y += ((u.targetPos.y - u.y) / dist) * step;
+                }
             } else {
-                // Поиск ближайшего врага
+                // Автопилот (поиск цели)
                 let enemies = battleState.units.filter(e => e.side !== u.side && e.hp > 0);
                 let targets = enemies.length > 0 ? enemies : battleState.enemyBuildings.filter(b => b.hp > 0);
                 let closest = null, minD = Infinity;
@@ -583,43 +667,12 @@
                 });
                 if (closest) {
                     u.targetUnit = closest;
-                    targetX = closest.x !== undefined ? closest.x : closest.gx;
-                    targetY = closest.y !== undefined ? closest.y : closest.gy;
-                }
-            }
-
-            if (targetX !== undefined && targetY !== undefined) {
-                let dist = Math.hypot(targetX - u.x, targetY - u.y);
-                
-                // Атака
-                if (dist <= range && u.targetUnit) {
-                    u.cd -= dt;
-                    if (u.cd <= 0) {
-                        u.cd = UNITS[u.type].cd;
-                        u.targetUnit.hp -= UNITS[u.type].dmg;
-                        sfxHit();
-                        let sp = w2s(u.x * GS, u.y * GS);
-                        spawnParticles(sp.x, sp.y, 5, u.side === 'player' ? '#3498db' : '#e74c3c', 50, 3, 0.5);
-                        if (u.targetUnit.hp <= 0 && u.targetUnit.gx !== undefined) {
-                            let bsp = w2s(u.targetUnit.gx * GS + GS/2, u.targetUnit.gy * GS + GS/2);
-                            spawnParticles(bsp.x, bsp.y, 20, '#8b6b3f', 100, 4, 1);
-                        }
-                    }
-                } 
-                // Движение
-                else if (dist > 0.1) {
-                    let dx = targetX - u.x, dy = targetY - u.y;
-                    let step = UNITS[u.type].speed * dt;
-                    u.x += (dx/dist) * step;
-                    u.y += (dy/dist) * step;
                 }
             }
         });
 
-        // Удаление мертвых юнитов
         battleState.units = battleState.units.filter(u => u.hp > 0);
 
-        // Проверка победы
         let pAlive = battleState.units.filter(u => u.side === 'player').length;
         let eAlive = battleState.units.filter(u => u.side === 'enemy').length;
         let bAlive = battleState.enemyBuildings.filter(b => b.hp > 0).length;
@@ -700,7 +753,6 @@
                 ctx.strokeStyle = '#00ff66'; ctx.lineWidth = 2;
                 ctx.beginPath(); ctx.arc(ux, uy, 12*scale, 0, Math.PI*2); ctx.stroke();
                 
-                // Линии приказов
                 if (u.targetUnit) {
                     let tx = offX + (u.targetUnit.x !== undefined ? u.targetUnit.x : u.targetUnit.gx) * GS * scale;
                     let ty = offY + (u.targetUnit.y !== undefined ? u.targetUnit.y : u.targetUnit.gy) * GS * scale;
@@ -716,9 +768,13 @@
             // Моделька юнита
             ctx.shadowColor = u.side === 'player' ? '#3498db' : '#e74c3c'; ctx.shadowBlur = 10;
             ctx.fillStyle = def.color;
-            ctx.beginPath(); ctx.arc(ux, uy, 6*scale, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ux, uy, (u.type === 'hero' ? 9 : 6)*scale, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = def.skin;
             ctx.beginPath(); ctx.arc(ux, uy - 4*scale, 3*scale, 0, Math.PI*2); ctx.fill();
+            // Корона для героя
+            if (u.type === 'hero') {
+                ctx.fillStyle = '#f1c40f'; ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.fillText('👑', ux, uy - 10*scale);
+            }
             ctx.shadowBlur = 0;
 
             // HP бар
@@ -742,7 +798,16 @@
             ctx.strokeRect(minX, minY, w, h);
         }
 
+        // Прицел метеорита
+        if (battleState.castingMeteor && mouse.inside) {
+            let mx = mouse.x, my = mouse.y;
+            ctx.strokeStyle = '#ff4500'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(mx, my, 40 * scale, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 69, 0, 0.3)'; ctx.beginPath(); ctx.arc(mx, my, 40 * scale, 0, Math.PI*2); ctx.fill();
+        }
+
         drawParticles();
+        drawFloatTexts();
       }
 
       function drawBattleBuilding(x, y, type, scale, hp, maxHp) {
@@ -770,19 +835,19 @@
           }
       }
 
-      // ============ МОДЕЛИ (ПО ФОТО) ============
+      // ============ МОДЕЛИ МИРА ============
       function bcolor(t) {
         var c = {
-          house:      { l: '#2e4d2e', d: '#1d331d', r: '#4a4a4a' }, // Зеленый дом
-          farm:       { l: '#8b5a2b', d: '#5c3a1f', r: '#b22222' }, // Красный амбар
-          lumberMill: { l: '#5c3a1f', d: '#3a2a1a', r: '#556b2f' }, // Сруб с мхом
-          barracks:   { l: '#8b5a2b', d: '#5c3a1f', r: '#8b0000' }, // Деревянные стены, красная крыша
-          blacksmith: { l: '#808080', d: '#505050', r: '#5c3a1f' }, // Каменная кузница
+          house:      { l: '#2e4d2e', d: '#1d331d', r: '#4a4a4a' },
+          farm:       { l: '#8b5a2b', d: '#5c3a1f', r: '#b22222' },
+          lumberMill: { l: '#5c3a1f', d: '#3a2a1a', r: '#556b2f' },
+          barracks:   { l: '#8b5a2b', d: '#5c3a1f', r: '#8b0000' },
+          blacksmith: { l: '#808080', d: '#505050', r: '#5c3a1f' },
           wall:       { l: '#a9a9a9', d: '#696969', r: '#808080' },
-          market:     { l: '#daa520', d: '#b8860b', r: '#e74c3c' }, // Рынок
-          tower:      { l: '#b0b0b0', d: '#707070', r: '#4a4a4a' }, // Башня
-          castle:     { l: '#d3d3d3', d: '#a9a9a9', r: '#1e90ff' }, // Замок с синими крышами
-          dragonLair: { l: '#4a5d23', d: '#2b3614', r: '#4a0000' }  // Логово в корнях
+          market:     { l: '#daa520', d: '#b8860b', r: '#e74c3c' },
+          tower:      { l: '#b0b0b0', d: '#707070', r: '#4a4a4a' },
+          castle:     { l: '#d3d3d3', d: '#a9a9a9', r: '#1e90ff' },
+          dragonLair: { l: '#4a5d23', d: '#2b3614', r: '#4a0000' }
         };
         return c[t] || { l: '#999', d: '#666', r: '#444' };
       }
@@ -829,22 +894,17 @@
           for(let i=0; i<5; i++) { ctx.beginPath(); ctx.arc(-w/4 + i*w/8, -h/2 - dp/2, 3, 0, Math.PI*2); ctx.fill(); }
           ctx.fillStyle = '#8b6914'; ctx.fillRect(w*0.3, h*0.2, w*0.3, 4); ctx.fillRect(w*0.3, h*0.3, w*0.3, 4);
         } else if (b.type === 'barracks') {
-          // Деревянные стены
           ctx.fillStyle = col.l; ctx.fillRect(-w/2, -h/2, w, h);
           ctx.strokeStyle = '#5c3a1f'; ctx.lineWidth = 1;
           for(let i=-h/2; i<h/2; i+=6) { ctx.beginPath(); ctx.moveTo(-w/2, i); ctx.lineTo(w/2, i); ctx.stroke(); }
-          // Красная крыша
           ctx.fillStyle = col.r;
           ctx.beginPath(); ctx.moveTo(-w/2 - dp, -h/2); ctx.lineTo(0, -h/2 - dp * 1.5); ctx.lineTo(w/2 + dp, -h/2); ctx.fill();
-          // Дверь
           ctx.fillStyle = '#3a1a00'; ctx.fillRect(-w*0.15, h*0.05, w*0.3, h*0.45);
-          // Скрещенные мечи над дверью
           ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2;
           ctx.beginPath(); 
           ctx.moveTo(-w*0.12, h*0.1); ctx.lineTo(w*0.12, h*0.4); 
           ctx.moveTo(w*0.12, h*0.1); ctx.lineTo(-w*0.12, h*0.4); 
           ctx.stroke();
-          // Флаг
           ctx.strokeStyle = '#5c3a1f'; ctx.beginPath(); ctx.moveTo(w*0.3, -h/2); ctx.lineTo(w*0.3, -h/2 - dp*2); ctx.stroke();
           ctx.fillStyle = '#e74c3c'; ctx.fillRect(w*0.3, -h/2 - dp*2, w*0.15, dp*0.8);
         } else if (b.type === 'blacksmith') {
@@ -909,7 +969,6 @@
         ctx.restore();
       }
 
-      // ============ РЕНДЕР МИРА ============
       function drawVoxelTree(t) {
         var p = w2s(t.x, t.y), z = cam.zoom;
         if (p.x < -100 || p.x > cv.width + 100 || p.y < -150 || p.y > cv.height + 100) return;
@@ -1091,7 +1150,7 @@
         if (e.button === 2) { // ПКМ
             e.preventDefault(); 
             if (battleState.active) {
-                // ПКМ в бою = приказ
+                if (battleState.castingMeteor) { battleState.castingMeteor = false; updateBattleUI(); return; }
                 let tapW = s2w(e.clientX, e.clientY);
                 let selected = battleState.units.filter(u => u.side === 'player' && u.selected);
                 if (selected.length > 0) {
@@ -1101,13 +1160,8 @@
                     }
                     
                     selected.forEach(u => {
-                        if (enemyTarget) {
-                            u.targetUnit = enemyTarget;
-                            u.targetPos = null;
-                        } else {
-                            u.targetUnit = null;
-                            u.targetPos = { x: tapW.x / GS, y: tapW.y / GS };
-                        }
+                        if (enemyTarget) { u.targetUnit = enemyTarget; u.targetPos = null; }
+                        else { u.targetUnit = null; u.targetPos = { x: tapW.x / GS, y: tapW.y / GS }; }
                     });
                     sfxBuild(); // звук клика
                     return;
@@ -1118,6 +1172,13 @@
         }
         else if (e.button === 0) { // ЛКМ
             if (battleState.active) {
+                if (battleState.castingMeteor) {
+                    // Каст метеорита
+                    let tapW = s2w(e.clientX, e.clientY);
+                    castMeteor(tapW.x, tapW.y);
+                    battleState.castingMeteor = false;
+                    return;
+                }
                 // Начинаем выделение рамкой
                 boxSelect.active = true;
                 boxSelect.startX = e.clientX; boxSelect.startY = e.clientY;
@@ -1149,7 +1210,7 @@
                     if (!e.shiftKey) battleState.units.forEach(u => u.selected = false);
                     tapped.selected = true;
                 } else {
-                    battleState.units.forEach(u => u.selected = false);
+                    if (!e.shiftKey) battleState.units.forEach(u => u.selected = false);
                 }
             } else {
                 // Выделение рамкой
@@ -1173,6 +1234,7 @@
       });
       cv.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
+      // === МОБИЛЬНОЕ УПРАВЛЕНИЕ ===
       var touches = {}, touchMode = null, panStart = { x: 0, y: 0, camX: 0, camY: 0 }, pinchStart = { dist: 0, camX: 0, camY: 0, zoom: 0, midWorldX: 0, midWorldY: 0 }, touchHasMoved = false, touchStartTime = 0, touchStartPos = { x: 0, y: 0 }, TAP_MAX_TIME = 300, TAP_MAX_DIST = 20;
       function getTouchIds() { return Object.keys(touches).map(Number); }
       function getTwoTouches() { var ids = getTouchIds(); if (ids.length < 2) return null; return [touches[ids[0]], touches[ids[1]]]; }
@@ -1201,10 +1263,6 @@
                 cam.zoom = nz; cam.x = pinchStart.midWorldX - (m.x - cv.width / 2) / cam.zoom; cam.y = pinchStart.midWorldY - (m.y - cv.height / 2) / cam.zoom; updateHUD(); 
             } 
         }
-        else if (ids.length >= 2 && touchMode === 'pan') { 
-            var pair2 = getTwoTouches(), m2 = tmid(pair2[0], pair2[1]), w2 = s2w(m2.x, m2.y); 
-            touchMode = 'pinch'; pinchStart.dist = tdist(pair2[0], pair2[1]); pinchStart.camX = cam.x; pinchStart.camY = cam.y; pinchStart.zoom = cam.zoom; pinchStart.midWorldX = w2.x; pinchStart.midWorldY = w2.y; 
-        }
       }, { passive: false });
 
       cv.addEventListener('touchend', function(e) {
@@ -1214,6 +1272,12 @@
           if (touchMode === 'pan' && !touchHasMoved && (Date.now() - touchStartTime) < TAP_MAX_TIME) {
             mouse.x = touchStartPos.x; mouse.y = touchStartPos.y; mouse.inside = true;
             if (battleState.active) {
+                if (battleState.castingMeteor) {
+                    let tapW = s2w(mouse.x, mouse.y);
+                    castMeteor(tapW.x, tapW.y);
+                    battleState.castingMeteor = false;
+                    return;
+                }
                 let tapW = s2w(mouse.x, mouse.y);
                 let tapped = battleState.units.find(u => u.side === 'player' && Math.hypot(u.x * GS - tapW.x, u.y * GS - tapW.y) < 50);
                 if (tapped) {
@@ -1244,9 +1308,43 @@
       }, { passive: false });
 
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') { if (placing) { placing = null; updateBanner(); renderShop(); } if (demolishMode) { demolishMode = false; updateBanner(); } }
+        if (e.key === 'Escape') { if (placing) { placing = null; updateBanner(); renderShop(); } if (demolishMode) { demolishMode = false; updateBanner(); } if (battleState.castingMeteor) { battleState.castingMeteor = false; updateBattleUI(); } }
         if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') { setShopCollapsed(!shopCollapsed, true); }
+        if (e.key === ' ' && battleState.active && battleState.mana >= battleState.maxMana) { battleState.castingMeteor = true; updateBattleUI(); }
       });
+
+      // === МЕТЕОРИТ ===
+      function castMeteor(wx, wy) {
+          if (battleState.mana < battleState.maxMana) return;
+          battleState.mana = 0;
+          sfxMeteor();
+          
+          let scale = Math.min(cv.width / (COLS * GS), cv.height / (ROWS * GS)) * 1.2;
+          let offX = (cv.width - COLS * GS * scale) / 2;
+          let offY = (cv.height - ROWS * GS * scale) / 2;
+          let sx = offX + wx * scale;
+          let sy = offY + wy * scale;
+          
+          spawnParticles(sx, sy, 50, '#ff4500', 300, 8, 1.5);
+          spawnParticles(sx, sy, 30, '#f1c40f', 200, 6, 1.2);
+          spawnParticles(sx, sy, 20, '#fff', 100, 4, 0.8);
+          
+          // Урон по врагам
+          battleState.units.forEach(u => {
+              if (u.side === 'enemy') {
+                  let dist = Math.hypot(u.x * GS - wx, u.y * GS - wy);
+                  if (dist < 150) { u.hp -= 200; spawnFloatText(sx + (Math.random()-0.5)*50, sy, '-200', '#ff4500'); }
+              }
+          });
+          // Урон по зданиям
+          battleState.enemyBuildings.forEach(b => {
+              let dist = Math.hypot((b.gx + S[b.type].size/2) * GS - wx, (b.gy + S[b.type].size/2) * GS - wy);
+              if (dist < 150) { b.hp -= 300; spawnFloatText(sx, sy, '-300', '#ff4500'); }
+          });
+          
+          // Тряска экрана (если добавить, но пока просто частицы)
+          setTimeout(() => { addLog('☄️ Метеорит обрушен на врага!'); }, 100);
+      }
 
       // UI Кнопки
       document.getElementById('botBattleBtn').onclick = () => findOpponent(true);
@@ -1257,10 +1355,14 @@
       document.getElementById('demolishBtn').onclick = function() { if (demolishMode) { demolishMode = false; addLog('🚫 Снос отменён'); } else { placing = null; demolishMode = true; addLog('🗑️ Режим сноса'); } updateBanner(); renderShop(); };
       
       document.getElementById('selectAllBtn').onclick = function() { battleState.units.forEach(u => u.selected = (u.side === 'player')); };
-      document.getElementById('focusHQBtn').onclick = function() { 
-          battleState.units.filter(u => u.side === 'player' && u.selected).forEach(u => { u.targetPos = { x: COLS/2, y: ROWS/2 }; u.targetUnit = null; }); 
-      };
       document.getElementById('retreatBtn').onclick = function() { if (confirm('Отступить?')) endBattle(false); };
+      
+      document.getElementById('meteorBtn').onclick = function() {
+          if (battleState.mana >= battleState.maxMana && !battleState.castingMeteor) {
+              battleState.castingMeteor = true;
+              updateBattleUI();
+          }
+      };
 
       document.getElementById('resetBtn').onclick = function() {
         if (!confirm('Удалить всё и начать заново?')) return;
